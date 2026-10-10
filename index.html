@@ -1,0 +1,1146 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1b2630"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Armas Adam">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-192.png">
+<style>html{-webkit-text-size-adjust:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Armas Adam</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Saira+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: faixa de aço com a marca no topo; a tela inicial lista as armas; cada arma abre
+   suas próprias abas no rodapé (Resumo, Registro, Guias, Munição, Treinos). */
+:root{
+  --bg:#e8ebee;--card:#f8f9fa;--ink:#141a20;--mut:#57626d;--line:#d2d7dc;--soft:#dde2e7;
+  --steel:#1b2630;--steel2:#263440;--on-steel:#eef2f5;--steel-mut:#a3b3c0;
+  --btn:#1b2630;--on-btn:#ffffff;
+  --brass:#876312;--brass-bg:#efe2bf;--brass-hi:#d9b25e;
+  --ok:#1c6a43;--ok-bg:#d6ecdf;--warn:#8a5206;--warn-bg:#f5e4bf;--bad:#a1261e;--bad-bg:#f5dad6;
+  --disp:"Saira Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c0f12;--card:#151a1f;--ink:#e7ecf0;--mut:#8b97a2;--line:#262e36;--soft:#1c232a;
+  --steel:#161d24;--steel2:#1f2932;--on-steel:#eef2f5;--steel-mut:#8fa1af;
+  --btn:#d4ab52;--on-btn:#14181c;
+  --brass:#d9b25e;--brass-bg:#382d13;--brass-hi:#d9b25e;
+  --ok:#70cf9b;--ok-bg:#15301f;--warn:#e6b35c;--warn-bg:#35280e;--bad:#f08b7f;--bad-bg:#3a1a16;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c0f12;--card:#151a1f;--ink:#e7ecf0;--mut:#8b97a2;--line:#262e36;--soft:#1c232a;
+  --steel:#161d24;--steel2:#1f2932;--on-steel:#eef2f5;--steel-mut:#8fa1af;
+  --btn:#d4ab52;--on-btn:#14181c;
+  --brass:#d9b25e;--brass-bg:#382d13;--brass-hi:#d9b25e;
+  --ok:#70cf9b;--ok-bg:#15301f;--warn:#e6b35c;--warn-bg:#35280e;--bad:#f08b7f;--bad-bg:#3a1a16;
+  color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--brass)}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px}
+.num{font-variant-numeric:tabular-nums}
+code,.mono{font-family:var(--mono);font-size:.9em;letter-spacing:.02em}
+
+
+body.lk{overflow:hidden}
+#launch{position:fixed;inset:0;z-index:50;background:#0c0f12;color:#eef2f5;overflow:auto}
+#launch[hidden]{display:none!important}
+.lbg{position:absolute;inset:0;background:#10161c url(fundo-armas.jpg) center top/cover no-repeat}
+.lsh{position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,15,18,.55) 0%,rgba(12,15,18,.05) 28%,rgba(12,15,18,.15) 48%,rgba(12,15,18,.88) 78%,rgba(12,15,18,.96) 100%)}
+.lin{position:relative;min-height:100%;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 34px) 22px calc(env(safe-area-inset-bottom,0px) + 26px);max-width:520px;margin:0 auto}
+.lbrand{display:flex;align-items:center;gap:12px}
+.lbrand .mark{width:46px;height:46px}
+.lbrand b{font:700 34px/1 var(--disp);letter-spacing:.04em;text-transform:uppercase;text-shadow:0 2px 14px rgba(0,0,0,.6)}
+.lbrand b span{color:#d9b25e}
+.ltag{margin:10px 0 0;color:#d6dee5;font-size:15px;text-shadow:0 1px 8px rgba(0,0,0,.7)}
+.lbox{margin-top:auto;padding-top:300px;display:flex;flex-direction:column;gap:11px}
+.lg-tabs{display:flex;gap:6px;background:rgba(20,26,32,.7);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:4px;backdrop-filter:blur(8px)}
+.lg-tabs button{flex:1;border:0;background:transparent;color:#a3b3c0;padding:9px;border-radius:9px;font-weight:600;font-size:15px}
+.lg-tabs button.on{background:#d9b25e;color:#14181c}
+#lgForm{display:flex;flex-direction:column;gap:10px}
+#launch input[type=email],#launch input[type=password]{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(12,15,18,.72);color:#fff;font:inherit;backdrop-filter:blur(8px)}
+#launch input::placeholder{color:#8b97a2}
+.lg-chk{display:flex;align-items:center;gap:9px;color:#d6dee5;font-size:14.5px}
+.lg-chk input{width:20px;height:20px;accent-color:#d9b25e}
+.lg-btn{border:0;border-radius:12px;padding:15px;background:#d9b25e;color:#14181c;font:700 17px var(--body);letter-spacing:.02em}
+.lg-btn:disabled{opacity:.6}
+.lg-lnk{background:none;border:0;color:#d6dee5;text-decoration:underline;padding:6px;font-size:14.5px}
+.lg-err{margin:0;color:#ffb3a9;font-size:14px;min-height:0}
+.lg-fine{margin:0;color:#8b97a2;font-size:12.5px;text-align:center}
+.lg-hi{color:#d6dee5;font-size:15px}.lg-hi b{display:block;color:#fff;font-size:18px;overflow-wrap:anywhere}
+.lsig{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:92px;opacity:.9;pointer-events:none}
+.chipst{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--on-steel);border-radius:99px;padding:5px 11px;font-size:12.5px;white-space:nowrap}
+.chipst[data-st="0"]{color:#f0c97a}.chipst[data-st="1"]{color:#8fe0b2}
+#cfg{z-index:25}
+.hero .wrap{padding-top:calc(26px + env(safe-area-inset-top,0px))}header.top{padding-top:env(safe-area-inset-top,0px)}
+/* marca */
+.hero{background:linear-gradient(160deg,var(--steel2),var(--steel));color:var(--on-steel);border-bottom:3px solid var(--brass-hi)}
+.hero .wrap{padding-block:26px 22px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:44px;height:44px;flex:none}
+.brand b{font:700 34px/1 var(--disp);letter-spacing:.04em;text-transform:uppercase}
+.brand b span{color:var(--brass-hi)}
+.hero p{margin-top:12px;color:var(--steel-mut);font-size:15px}
+.hero p b{color:var(--on-steel)}
+.ban{background:var(--warn-bg);color:var(--warn);font-size:14px;padding:9px 0;border-bottom:1px solid var(--line)}
+
+/* títulos de seção */
+.sec{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 10px}
+.sec h2,.lbl{font:600 14px/1.2 var(--disp);letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+.note{color:var(--mut);font-size:13.5px;margin-top:10px}
+
+/* botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;background:var(--btn);color:var(--on-btn);border:0;border-radius:10px;padding:9px 14px;font-size:14.5px;font-weight:600;white-space:nowrap}
+.btn.o{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.d{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn.s{padding:6px 11px;font-size:13.5px}
+.btn:active{transform:scale(.98)}
+
+/* cartões */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.row>div{min-width:0}
+.nm{font-weight:600}
+.sub{color:var(--mut);font-size:14px}
+.pill{display:inline-block;font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.none{background:transparent;color:var(--mut);border:1px dashed var(--line)}
+.pill.info{background:var(--soft);color:var(--ink)}
+
+/* arma na tela inicial */
+.arma{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0;margin-bottom:12px;overflow:hidden}
+.arma .a-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:14px 16px 4px}
+.arma .a-nm{font:700 25px/1.1 var(--disp);letter-spacing:.02em;text-transform:uppercase}
+.arma .a-cal{font:600 15px var(--mono);color:var(--brass);white-space:nowrap}
+.arma .a-sub{display:block;padding:0 16px 12px;color:var(--mut);font-size:14px}
+.arma .a-rows{display:block;border-top:1px solid var(--line)}
+.arma .a-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 16px;font-size:14px}
+.arma .a-row+.a-row{border-top:1px solid var(--line)}
+.arma .a-row em{font:600 13px var(--disp);font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.add{display:block;width:100%;background:transparent;border:1.5px dashed var(--line);border-radius:14px;padding:14px;color:var(--mut);font-weight:600}
+.link{display:flex;width:100%;text-align:left;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:10px}
+.link svg{width:24px;height:24px;flex:none;color:var(--brass)}
+.link .t{flex:1;min-width:0}
+.link .t b{display:block}
+.link .t span{color:var(--mut);font-size:13.5px}
+.link .v{font-weight:600;font-size:14px;text-align:right;white-space:nowrap}
+.al{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.al.bad{border-left-color:var(--bad)}
+
+.al small{display:block;color:var(--mut);font-size:13px}
+
+/* app */
+#app{padding-bottom:92px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--steel);color:var(--on-steel);border-bottom:2px solid var(--brass-hi)}
+header.top .in{display:flex;align-items:center;gap:10px;padding:10px 16px;max-width:720px;margin:0 auto}
+header.top .back{background:transparent;border:1px solid rgba(255,255,255,.22);color:var(--on-steel);border-radius:9px;padding:6px 11px;font-size:14px;white-space:nowrap}
+header.top .t{flex:1;min-width:0;line-height:1.15}
+header.top .t b{display:block;font:700 21px/1.1 var(--disp);letter-spacing:.03em;text-transform:uppercase;overflow-wrap:anywhere}
+header.top .t span{font-size:13px;color:var(--steel-mut)}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);z-index:6;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .in{display:flex;max-width:720px;margin:0 auto}
+nav.tabs button{flex:1;min-width:0;background:none;border:0;padding:9px 2px 8px;color:var(--mut);font-size:11.5px;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.tabs svg{width:22px;height:22px}
+nav.tabs button.on{color:var(--brass);font-weight:700}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* situação */
+.go{border-radius:14px;padding:14px;margin:16px 0 10px;border:1px solid var(--line)}
+.go.ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.go.bad{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.go.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.go b{display:block;font:700 20px/1.15 var(--disp);letter-spacing:.03em;text-transform:uppercase}
+.go span{font-size:14px}
+.sit{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left}
+.sit:first-child{border-top:0;padding-top:2px}
+.sit:last-child{padding-bottom:2px}
+.bx{display:block;min-width:0}
+.sit small{display:block;color:var(--mut);font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.stat b{display:block;font:700 clamp(20px,6.2vw,27px)/1.1 var(--disp);letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat span{color:var(--mut);font-size:13px}
+.regua{height:7px;background:var(--soft);border-radius:9px;overflow:hidden;margin-top:12px}
+.regua i{display:block;height:100%;background:var(--ok);border-radius:9px}
+.regua.warn i{background:var(--warn)}.regua.bad i{background:var(--bad)}.regua.brass i{background:var(--brass)}
+.reg-l{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--mut);margin-top:5px;font-variant-numeric:tabular-nums}
+dl.dados{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin:0}
+dl.dados div{min-width:0}
+dl.dados dt{font:600 12px var(--disp);letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+dl.dados dd{margin:1px 0 0;font-weight:500;overflow-wrap:anywhere}
+.ax{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ax button.th{width:64px;height:64px;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--soft)}
+.ax button.th img{width:100%;height:100%;object-fit:cover;display:block}
+.ax a.pdf,.ax span.pdf{display:inline-flex;align-items:center;min-height:64px;max-width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;text-decoration:none;color:var(--ink);background:var(--soft);overflow-wrap:anywhere}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.item{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.item .v{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.empty{text-align:center;padding:34px 14px;color:var(--mut);border:1.5px dashed var(--line);border-radius:14px}
+.empty b{display:block;color:var(--ink);font:700 21px var(--disp);letter-spacing:.03em;text-transform:uppercase;margin-bottom:4px}
+.empty .btn{margin-top:14px}
+
+/* gastos */
+.filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 12px;font-size:14px;white-space:nowrap}
+.chip.on{background:var(--btn);color:var(--on-btn);border-color:var(--btn)}
+.total{font:700 38px/1.05 var(--disp);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.chart{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;height:150px;margin-top:14px}
+.chart .col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
+.chart .col span{font-size:10.5px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap;margin-bottom:3px}
+.chart .col i{display:block;width:100%;background:var(--brass);border-radius:4px 4px 0 0;min-height:2px}
+.chart .col i.z{background:var(--line)}
+.months{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:5px;border-top:1px solid var(--line);padding-top:4px}
+.months span{font-size:10.5px;color:var(--mut);text-align:center;text-transform:uppercase;letter-spacing:.03em}
+.cats{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.cat .row{font-size:14px;align-items:baseline}
+.cat .regua{margin-top:4px;height:6px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th{font:600 12px var(--disp);letter-spacing:.09em;text-transform:uppercase;color:var(--mut);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tbody tr{cursor:pointer}
+tfoot td{font-weight:700;border-top:2px solid var(--line)}
+
+/* regularização */
+.chk{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left}
+.card>.chk:first-child{border-top:0}
+.chk .mk{flex:none;width:24px;height:24px;border-radius:7px;border:1.5px solid var(--line);display:grid;place-items:center;font-size:14px;font-weight:700;margin-top:1px}
+.chk .mk.ok{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
+.chk .mk.warn{background:var(--warn-bg);border-color:transparent;color:var(--warn)}
+.chk .mk.bad{background:var(--bad-bg);border-color:transparent;color:var(--bad)}
+.chk .mk.auto{border-radius:99px}
+.chk .tx{min-width:0;flex:1}
+.chk .tx b{display:block;font-weight:600}
+.chk .tx small{display:block;color:var(--mut);font-size:13.5px}
+.ref{margin:0;padding:0;list-style:none}
+.ref li{padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
+.ref li:first-child{border-top:0;padding-top:0}
+.ref li b{display:block;font:600 13px var(--disp);letter-spacing:.09em;text-transform:uppercase;color:var(--brass)}
+.fontes{font-size:13.5px;color:var(--mut);padding-left:18px;margin:8px 0 0}
+.fontes li{margin-bottom:4px;overflow-wrap:anywhere}
+select.sel{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+
+/* formulário */
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet .p{background:var(--card);width:100%;max-width:720px;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(22px + env(safe-area-inset-bottom,0px))}
+.sheet h2{font:700 24px/1.1 var(--disp);letter-spacing:.03em;text-transform:uppercase}
+.sheet h3{font:600 13px var(--disp);letter-spacing:.09em;text-transform:uppercase;color:var(--brass);margin:20px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+.sheet label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
+.sheet input,.sheet select,.sheet textarea{width:100%;min-width:0;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.sheet textarea{min-height:70px;resize:vertical}
+.sheet .hint{font-size:12.5px;color:var(--mut);margin-top:4px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two>div{min-width:0}
+.sheet .fa{display:flex;gap:8px;margin-top:22px}
+.sheet .fa .btn{flex:1;padding:13px 8px}
+.axe{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--soft);border-radius:10px;padding:8px 10px;margin-top:8px;font-size:14px}
+.axe span{min-width:0;overflow-wrap:anywhere}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
+#lb{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px}
+#lb img{max-width:100%;max-height:82%;border-radius:8px}
+#lb button{background:#fff;color:#111;border:0;border-radius:10px;padding:10px 20px;font-weight:600}
+@media (max-width:380px){.brand b{font-size:29px}.arma .a-nm{font-size:22px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="launch"><div class="lbg"></div><div class="lsh"></div>
+ <div class="lin">
+  <div class="lbrand"><svg class="mark" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" fill="none" stroke="#d9b25e" stroke-width="2.5"/><circle cx="22" cy="22" r="12.5" fill="none" stroke="#d9b25e" stroke-width="2.5"/><circle cx="22" cy="22" r="4.5" fill="#d9b25e"/><path d="M22 0v9M22 35v9M0 22h9M35 22h9" stroke="#d9b25e" stroke-width="2.5" fill="none"/></svg>
+   <b>Armas <span>Adam</span></b></div>
+  <p class="ltag">Suas armas, guias e munição em dia.</p>
+  <div class="lbox" id="lgBox"></div>
+ </div>
+ <img class="lsig" src="assinatura.png" alt="" onerror="this.remove()">
+</div>
+<div class="sheet" id="cfg" hidden><div class="p" id="cfgForm"></div></div>
+<div id="home">
+  <div class="hero"><div class="wrap">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" fill="none" stroke="#d9b25e" stroke-width="2.5"/><circle cx="22" cy="22" r="12.5" fill="none" stroke="#d9b25e" stroke-width="2.5"/><circle cx="22" cy="22" r="4.5" fill="#d9b25e"/><path d="M22 0v9M22 35v9M0 22h9M35 22h9" stroke="#d9b25e" stroke-width="2.5" fill="none"/></svg>
+      <b>Armas <span>Adam</span></b>
+      <span style="flex:1"></span><button class="chipst syncSt" data-st="0">Carregando…</button><button class="chipst" id="cfgBtn" aria-label="Ajustes">⚙</button>
+    </div>
+    <p id="heroSt">Carregando seus dados…</p>
+  </div></div>
+  <div class="ban" id="ban" hidden><div class="wrap">Sem conexão com o banco de dados nesta tela. O que você lançar agora não fica salvo.</div></div>
+  <div class="wrap" id="homeBody" style="padding-bottom:40px"></div>
+</div>
+
+<div id="app" hidden>
+  <header class="top"><div class="in">
+    <button class="back" data-act="home">‹ Início</button>
+    <div class="t"><b id="tTit"></b><span id="tSub"></span></div>
+  </div></header>
+  <main class="wrap" id="view"></main>
+  <nav class="tabs"><div class="in" id="tabs"></div></nav>
+</div>
+
+<div class="sheet" id="sheet" hidden><div class="p" id="form"></div></div>
+<div id="lb" hidden><img alt="Anexo ampliado"><button data-act="lbClose">Fechar</button></div>
+<div id="toast" hidden></div>
+<input type="file" id="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const pd=s=>{const[a,b,c]=String(s).split('-');return new Date(+a,+b-1,+c)};
+const diff=(a,b)=>Math.round((pd(a)-pd(b))/864e5);
+const hoje=()=>iso(new Date());
+const addD=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return iso(d)};
+const fd=s=>s?String(s).split('-').reverse().join('/'):'—';
+const brl=n=>(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const fmt=n=>(n||0).toLocaleString('pt-BR');
+const pl=(n,s,p)=>fmt(n)+' '+(n===1?s:(p||s+'s'));
+const sum=(L,f)=>L.reduce((t,x)=>t+(Number(f(x))||0),0);
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function num(v){
+  if(v==null)return null;let s=String(v).trim().replace(/[R$\s]/g,'');if(!s)return null;
+  if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');
+  const x=parseFloat(s);return isFinite(x)?x:null;
+}
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const ICON={
+  resumo:'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/>',
+  registro:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h5M7 14h9"/>',
+  guias:'<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H14a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h5.5"/>',
+  municao:'<path d="M9 21V10c0-3 1.2-5.5 3-7 1.8 1.5 3 4 3 7v11z"/><path d="M9 17h6"/>',
+  treinos:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+  docs:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+  gastos:'<path d="M3 20h18M6 20v-8M11 20V5M16 20v-6"/>',
+  regular:'<path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>'
+};
+ICON.habit=ICON.treinos;
+const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+
+/* ---------- estado ---------- */
+const COLS=['armas','guias','docs','gastos','treinos'];
+const S={armas:[],guias:[],docs:[],gastos:[],treinos:[],perfil:{nivel:1,checks:{}}};
+let db=null,assets=null,ready=false,dirty=false;
+const got={};
+let V={scr:'home',arma:null,tab:'resumo'};
+const G={ano:hoje().slice(0,4),cat:'',arma:''};
+const NIV={
+  1:{t:8,c:0,mun:4000,mun22:8000,txt:'8 treinos ou competições em 12 meses'},
+  2:{t:12,c:4,mun:10000,mun22:16000,txt:'12 treinos e 4 competições em 12 meses'},
+  3:{t:20,c:6,mun:20000,mun22:32000,txt:'20 treinos e 6 competições em 12 meses'}
+};
+const nivel=()=>NIV[S.perfil.nivel]||null;
+const TIPOS=['Pistola','Revólver','Carabina / Rifle','Espingarda','Outro'];
+const GRUPOS=['Arma curta raiada permitida','Arma curta raiada restrita','Arma curta lisa permitida','Arma curta lisa restrita','Arma longa raiada permitida','Arma longa raiada restrita','Arma longa lisa permitida','Arma longa lisa restrita'];
+const CATS=['Munição','Taxas e GRU','Clube','Acessórios','Manutenção','Outros'];
+const DOCT=['CR','Filiação a clube','Laudo psicológico','Capacidade técnica','Certidões negativas','Declaração de Segurança do Acervo','Outro'];
+const FINS=['Treinamento','Competição','Caça / manejo','Manutenção','Mudança de endereço do acervo','Outra'];
+
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
+const armaDe=id=>S.armas.find(a=>a.id===id);
+const blob=id=>blobUrl(id);
+
+/* ---------- gravação ---------- */
+async function put(col,o){
+  S[col]=S[col].filter(x=>x.id!==o.id).concat(o);
+  if(!db){toast('Sem conexão: não ficou salvo');return false}
+  try{await db.doc(col+'/'+o.id).set(o);return true}catch(e){toast('Não salvou. Tente de novo.');return false}
+}
+async function del(col,id){
+  const o=S[col].find(x=>x.id===id);S[col]=S[col].filter(x=>x.id!==id);
+  if(!db)return;
+  try{await db.doc(col+'/'+id).delete()}catch(e){toast('Não apagou. Tente de novo.');return}
+  if(assets&&o&&o.anexos)for(const a of o.anexos){try{await assets.delete(a.id)}catch(e){}}
+}
+async function putPerfil(p){
+  S.perfil=p;
+  if(!db){toast('Sem conexão: não ficou salvo');return}
+  try{await db.doc('config/perfil').set(p)}catch(e){toast('Não salvou. Tente de novo.')}
+}
+
+/* ---------- regras de validade ---------- */
+function st(val,warn){
+  if(!val)return{k:'none',t:'sem validade informada',n:null};
+  const n=diff(val,hoje());
+  if(n<0)return{k:'bad',t:'vencido há '+pl(-n,'dia'),n};
+  if(n===0)return{k:'bad',t:'vence hoje',n};
+  if(n<=warn)return{k:'warn',t:'vence em '+pl(n,'dia'),n};
+  return{k:'ok',t:'válido até '+fd(val),n};
+}
+const pill=s=>`<span class="pill ${s.k}">${esc(s.t)}</span>`;
+function regua(em,val,k){
+  if(!em||!val)return'';
+  const tot=Math.max(1,diff(val,em)),n=diff(val,hoje());
+  const p=Math.min(100,Math.max(0,(tot-n)/tot*100));
+  return `<div class="regua ${k||''}"><i style="width:${p.toFixed(1)}%"></i></div><div class="reg-l"><span>emitido ${fd(em)}</span><span>vence ${fd(val)}</span></div>`;
+}
+/* CR e CRAF: o pedido de renovação deve ser feito até 30 dias antes do vencimento */
+function renov(val){
+  if(!val)return'';const n=diff(val,hoje());
+  if(n<0)return'Vencido. Regularize pelo Sinarm-CAC antes de transportar a arma.';
+  if(n<=30)return'O prazo de 30 dias antes do vencimento já passou. Protocole a renovação agora.';
+  if(n<=90)return'Peça a renovação até '+fd(addD(val,-30))+' (30 dias antes do vencimento).';
+  return'Renovação: pedir até '+fd(addD(val,-30))+'.';
+}
+const docCR=()=>S.docs.filter(d=>d.tipo==='CR').sort((a,b)=>(b.validade||'').localeCompare(a.validade||''))[0];
+const stCR=()=>{const c=docCR();return c?st(c.validade,60):{k:'none',t:'CR não cadastrado',n:null}};
+const stCRAF=a=>a.crafValidade?st(a.crafValidade,60):{k:'none',t:'CRAF sem validade',n:null};
+const guiasDe=id=>S.guias.filter(g=>g.arma===id);
+function stGuia(a){
+  const L=guiasDe(a.id).filter(g=>!g.arq&&g.validade),h=hoje();
+  const at=L.filter(g=>g.validade>=h).sort((x,y)=>y.validade.localeCompare(x.validade));
+  if(at.length){const s=st(at[0].validade,7);if(s.k==='ok')s.t='guia válida até '+fd(at[0].validade);return s}
+  if(L.length)return{k:'bad',t:'guia vencida',n:-1};
+  return{k:'none',t:'nenhuma guia',n:null};
+}
+function habit(a){
+  const ini=addD(hoje(),-365),h=hoje();
+  const ids=new Set(S.armas.filter(x=>a.grupo?x.grupo===a.grupo:x.id===a.id).map(x=>x.id));
+  const L=S.treinos.filter(t=>ids.has(t.arma)&&t.data>=ini&&t.data<=h);
+  const co=L.filter(t=>t.tipo==='Competição').length,tr=L.length-co,N=nivel();
+  if(!N)return{tr,co,tot:L.length,ok:true,meta:0,feito:L.length,txt:pl(L.length,'evento')+' em 12 meses'};
+  if(!N.c)return{tr,co,tot:L.length,ok:L.length>=N.t,meta:N.t,feito:L.length,txt:L.length+' de '+N.t+' em 12 meses'};
+  return{tr,co,tot:L.length,ok:tr>=N.t&&co>=N.c,meta:N.t+N.c,feito:Math.min(tr,N.t)+Math.min(co,N.c),txt:tr+'/'+N.t+' treinos · '+co+'/'+N.c+' competições'};
+}
+const is22=c=>/^\.?22(\s*l\.?r\.?)?$/i.test(String(c||'').trim());
+function munAno(ano){
+  const L=S.gastos.filter(g=>g.categoria==='Munição'&&(g.data||'').startsWith(ano));
+  let n=0,n22=0;L.forEach(g=>{const a=armaDe(g.arma);if(a&&is22(a.calibre))n22+=g.qtd||0;else n+=g.qtd||0});
+  return{n,n22,valor:sum(L,g=>g.valor)};
+}
+function munArma(a){
+  const ano=hoje().slice(0,4),C=S.gastos.filter(g=>g.arma===a.id&&g.categoria==='Munição');
+  const cart=sum(C,g=>g.qtd),gasto=sum(C,g=>g.valor),CA=C.filter(g=>(g.data||'').startsWith(ano));
+  const tiros=sum(S.treinos.filter(t=>t.arma===a.id),t=>t.tiros);
+  return{C,cart,gasto,cartAno:sum(CA,g=>g.qtd),gastoAno:sum(CA,g=>g.valor),tiros,custo:cart?gasto/cart:null,estoque:cart-tiros};
+}
+/* tudo que tem data de vencimento, do mais urgente ao menos */
+function alertas(){
+  const L=[];
+  S.docs.forEach(d=>{if(d.validade)L.push({nome:d.tipo==='Outro'?(d.titulo||'Documento'):d.tipo,sub:'Documento',s:st(d.validade,d.tipo==='CR'?60:30),act:'geral',id:'docs'})});
+  S.armas.forEach(a=>{if(a.crafValidade)L.push({nome:'CRAF',sub:a.nome,s:st(a.crafValidade,60),act:'armaTab',id:a.id+'|registro'})});
+  S.guias.forEach(g=>{if(g.arq||!g.validade)return;const s=st(g.validade,7);if(s.n<-30)return;const a=armaDe(g.arma);
+    L.push({nome:'Guia de tráfego · '+(g.finalidade||''),sub:a?a.nome:'',s,act:'armaTab',id:g.arma+'|guias'})});
+  return L.sort((x,y)=>x.s.n-y.s.n);
+}
+
+/* ---------- checklist de regularização ---------- */
+function checklist(){
+  const N=nivel(),ck=S.perfil.checks||{},ano=hoje().slice(0,4),G1=[],G2=[],G3=[],G4=[];
+  const auto=(t,d,s)=>({t,d,auto:s.k,st:s.t});
+  const man=(key,t,d)=>({t,d,key,on:!!ck[key]});
+  const dc=tp=>S.docs.filter(d=>d.tipo===tp).sort((a,b)=>(b.validade||'').localeCompare(a.validade||''))[0];
+  const sdoc=(tp,w)=>{const d=dc(tp);return!d?{k:'none',t:'não cadastrado'}:d.validade?st(d.validade,w):{k:'ok',t:'cadastrado'}};
+  G1.push(auto('CR válido','Certificado de Registro na categoria da atividade.',stCR()));
+  S.armas.forEach(a=>{
+    G1.push(auto('CRAF da '+a.nome,'O número de série do CRAF deve bater com o da arma.',stCRAF(a)));
+    G1.push(auto('Guia de tráfego da '+a.nome,'Vale só para o trajeto e a finalidade que estão na guia.',stGuia(a)));
+  });
+  G1.push(man('foto','Documento oficial com foto','RG ou CNH junto com CR, CRAF e guia.'));
+  G1.push(man('desmun','Arma desmuniciada no trajeto','Munição separada, em recipiente próprio.'));
+  G1.push(man('finalidade','Comprovante da finalidade','Inscrição na prova, calendário do clube ou ordem de serviço do armeiro.'));
+  G2.push(auto('Filiação a clube de tiro','Comprovante de filiação a entidade de tiro desportivo.',sdoc('Filiação a clube',30)));
+  if(N)S.armas.forEach(a=>{const h=habit(a);G2.push(auto('Habitualidade · '+a.nome,N.txt+', em eventos distintos.',{k:h.ok?'ok':'warn',t:h.txt}))});
+  G2.push(auto('Laudo psicológico','De psicólogo credenciado pela PF. Vale 1 ano para os processos.',sdoc('Laudo psicológico',30)));
+  G2.push(auto('Capacidade técnica','Emitida por instrutor credenciado. Vale 1 ano para os processos.',sdoc('Capacidade técnica',30)));
+  G2.push(man('certid','Certidões negativas para a renovação','Federal, Estadual, Militar e Eleitoral. Valem 90 dias, tire perto do pedido.'));
+  G2.push(man('prazo','Renovação pedida até 30 dias antes do vencimento','CR e CRAF, pelo Sinarm-CAC com login gov.br.'));
+  G3.push(man('cofre','Arma guardada em cofre ou caixa metálica','Com tranca, em local de alvenaria. É o que você declara na Declaração de Segurança do Acervo.'));
+  G3.push(man('endereco','Endereço do acervo atualizado','Mudou de endereço? Atualize no Sinarm-CAC e peça guia para levar a arma.'));
+  if(N){const m=munAno(ano),p=m.n/N.mun;
+    G4.push(auto('Limite anual de munição','Nível '+S.perfil.nivel+': até '+fmt(N.mun)+' cartuchos por ano ('+fmt(N.mun22)+' de .22).',{k:p>1?'bad':p>=.9?'warn':'ok',t:fmt(m.n)+' de '+fmt(N.mun)+' em '+ano}))}
+  G4.push(man('nf','Notas fiscais de munição guardadas','Compra só no calibre das armas registradas. Anexe a nota em cada lançamento.'));
+  return[['Ao sair de casa com a arma',G1],['Para manter o CR em dia',G2],['Em casa',G3],['Munição',G4]];
+}
+function chkResumo(){let ok=0,tot=0;checklist().forEach(([,L])=>L.forEach(i=>{tot++;if(i.auto?i.auto==='ok':i.on)ok++}));return{ok,tot}}
+
+/* ---------- telas ---------- */
+function render(){
+  $('#home').hidden=V.scr!=='home';$('#app').hidden=V.scr==='home';
+  if(V.scr==='home')return home();
+  if(V.scr==='arma'){const a=armaDe(V.arma);if(!a){V={scr:'home'};return render()}return telaArma(a)}
+  telaGeral();
+}
+function home(){
+  const A=alertas().filter(x=>x.s.k!=='ok'),vazio=!S.armas.length&&!S.docs.length;
+  $('#heroSt').innerHTML=!ready?'Carregando seus dados…':vazio?'Comece cadastrando sua arma e o seu CR.':A.length?`<b>${pl(A.length,'vencimento')}</b> ${A.length===1?'pede':'pedem'} atenção.`:'<b>Tudo em dia.</b> Nenhum vencimento próximo.';
+  if(!ready){$('#homeBody').innerHTML='<div class="sec"><h2>Minhas armas</h2></div><div class="empty">Buscando armas, guias e documentos…</div>';return}
+  const ano=hoje().slice(0,4),gAno=sum(S.gastos.filter(g=>(g.data||'').startsWith(ano)),g=>g.valor),cr=stCR(),ck=chkResumo();
+  $('#homeBody').innerHTML=
+  (A.length?`<div class="sec"><h2>Atenção</h2></div>`+A.map(x=>`<button class="al ${x.s.k}" data-act="${x.act}" data-id="${esc(x.id)}"><span class="bx"><b>${esc(x.nome)}</b><small>${esc(x.sub)}</small></span>${pill(x.s)}</button>`).join(''):'')+
+  `<div class="sec"><h2>Minhas armas</h2></div>`+
+  (S.armas.length?S.armas.slice().sort((a,b)=>(a.criado||'').localeCompare(b.criado||'')).map(a=>{const h=habit(a);return `<button class="arma" data-act="arma" data-id="${esc(a.id)}">
+    <span class="a-top"><span class="a-nm">${esc(a.nome)}</span><span class="a-cal">${esc(a.calibre||'')}</span></span>
+    <span class="a-sub">${esc(a.tipo||'Arma')}${a.serie?` · série <code>${esc(a.serie)}</code>`:''}</span>
+    <span class="a-rows">
+      <span class="a-row"><em>CRAF</em>${pill(stCRAF(a))}</span>
+      <span class="a-row"><em>Guia</em>${pill(stGuia(a))}</span>
+      ${nivel()?`<span class="a-row"><em>Habitualidade</em><span class="pill ${h.ok?'ok':'info'}">${esc(h.txt)}</span></span>`:''}
+    </span></button>`}).join(''):`<div class="empty"><b>Nenhuma arma cadastrada</b>Cadastre a arma para guardar o CRAF, as guias, as compras de munição e os treinos dela.</div>`)+
+  `<button class="add" data-act="novaArma" style="margin-top:${S.armas.length?0:12}px">+ Adicionar arma</button>
+  <div class="sec"><h2>Geral</h2></div>
+  <button class="link" data-act="geral" data-id="docs">${ic('docs')}<span class="t"><b>Meu CR e documentos</b><span>CR, clube, laudos e certidões</span></span><span class="v">${pill({k:cr.k,t:cr.k==='ok'?'em dia':cr.k==='none'?'cadastrar':cr.t})}</span></button>
+  <button class="link" data-act="geral" data-id="habit">${ic('treinos')}<span class="t"><b>Habitualidade</b><span>Treinos e competições, todas as armas</span></span><span class="v num">${habitGeral().R.length}<br><small style="font-weight:400;color:var(--mut)">em 12 meses</small></span></button>
+  <button class="link" data-act="geral" data-id="gastos">${ic('gastos')}<span class="t"><b>Gastos</b><span>Munição, taxas, clube e acessórios</span></span><span class="v num">${brl(gAno)}<br><small style="font-weight:400;color:var(--mut)">em ${ano}</small></span></button>
+  <button class="link" data-act="geral" data-id="regular">${ic('regular')}<span class="t"><b>Regularização</b><span>O que precisa estar em dia</span></span><span class="v num">${ck.ok} de ${ck.tot}</span></button>`;
+}
+function tabs(L){$('#tabs').innerHTML=L.map(([k,l])=>`<button data-act="tab" data-id="${k}" class="${V.tab===k?'on':''}">${ic(k)}${l}</button>`).join('')}
+function anexos(L){
+  if(!L||!L.length)return'';
+  return `<div class="ax">`+L.map(a=>/^image\//.test(a.tipo||'')?`<button class="th" data-act="ver" data-id="${esc(a.id)}" title="${esc(a.nome)}"><img src="${blob(a.id)}" alt="${esc(a.nome)}" loading="lazy"></button>`:`<a class="pdf" href="${blob(a.id)}" target="_blank" rel="noopener">PDF · ${esc(a.nome)}</a>`).join('')+`</div>`;
+}
+
+function telaArma(a){
+  $('#tTit').textContent=a.nome;$('#tSub').textContent=[a.tipo,a.calibre].filter(Boolean).join(' · ');
+  tabs([['resumo','Resumo'],['registro','Registro'],['guias','Guias'],['municao','Munição'],['treinos','Treinos']]);
+  const v=$('#view');
+  if(V.tab==='registro')return v.innerHTML=aRegistro(a);
+  if(V.tab==='guias')return v.innerHTML=aGuias(a);
+  if(V.tab==='municao')return v.innerHTML=aMunicao(a);
+  if(V.tab==='treinos')return v.innerHTML=aTreinos(a);
+  v.innerHTML=aResumo(a);
+}
+function aResumo(a){
+  const cr=stCR(),cf=stCRAF(a),gt=stGuia(a),h=habit(a),m=munArma(a),N=nivel();
+  const pend=[];
+  if(cr.k==='bad'||cr.k==='none')pend.push('CR');
+  if(cf.k==='bad'||cf.k==='none')pend.push('CRAF');
+  if(gt.k==='bad'||gt.k==='none')pend.push('guia de tráfego');
+  const aviso=[cr,cf,gt].some(s=>s.k==='warn');
+  const go=pend.length?`<div class="go bad"><b>Não transporte ainda</b><span>Falta ou está vencido: ${pend.join(', ')}.</span></div>`
+    :aviso?`<div class="go warn"><b>Em dia, com vencimento próximo</b><span>Veja o que vence primeiro logo abaixo.</span></div>`
+    :`<div class="go ok"><b>Documentos em dia</b><span>CR, CRAF e guia cadastrados estão dentro da validade.</span></div>`;
+  return go+`<div class="card">
+    <button class="sit" data-act="geral" data-id="docs"><span class="bx"><b>CR</b><small>É pessoal e vale para todas as suas armas</small></span>${pill(cr)}</button>
+    <button class="sit" data-act="tab" data-id="registro"><span class="bx"><b>CRAF</b><small>${a.registro?'Registro <code>'+esc(a.registro)+'</code>':'Registro desta arma'}</small></span>${pill(cf)}</button>
+    <button class="sit" data-act="tab" data-id="guias"><span class="bx"><b>Guia de tráfego</b><small>${pl(guiasDe(a.id).filter(g=>!g.arq&&g.validade>=hoje()).length,'guia ativa','guias ativas')}</small></span>${pill(gt)}</button>
+    ${N?`<button class="sit" data-act="tab" data-id="treinos"><span class="bx"><b>Habitualidade</b><small>${esc(N.txt)}</small></span><span class="pill ${h.ok?'ok':'info'}">${esc(h.txt)}</span></button>`:''}
+  </div>
+  <div class="sec"><h2>Munição em ${hoje().slice(0,4)}</h2></div>
+  <div class="grid">
+    <div class="stat"><b>${brl(m.gastoAno)}</b><span>gasto no ano</span></div>
+    <div class="stat"><b>${fmt(m.cartAno)}</b><span>cartuchos comprados</span></div>
+    <div class="stat"><b>${m.custo!=null?brl(m.custo):'—'}</b><span>custo médio por tiro</span></div>
+    <div class="stat"><b>${m.cart?fmt(Math.max(0,m.estoque)):'—'}</b><span>estoque estimado</span></div>
+  </div>
+  <div class="acts"><button class="btn" data-act="novoGasto" data-id="${esc(a.id)}">+ Compra de munição</button><button class="btn o" data-act="novoTreino">+ Treino</button><button class="btn o" data-act="novaGuia">+ Guia</button></div>`;
+}
+function aRegistro(a){
+  const cf=stCRAF(a),d=(l,v,m)=>`<div><dt>${l}</dt><dd${m?' class="mono"':''}>${esc(v||'—')}</dd></div>`;
+  return `<div class="sec"><h2>Registro (CRAF)</h2><button class="btn s" data-act="edArma" data-id="${esc(a.id)}">Editar</button></div>
+  <div class="card"><div class="row"><div><div class="nm">${esc(a.sistema||'Sistema não informado')}</div><div class="sub mono">${esc(a.registro||'nº do registro não informado')}</div></div>${pill(cf)}</div>
+    ${regua(a.crafEmissao,a.crafValidade,cf.k)}
+    ${a.crafValidade?`<p class="note">${esc(renov(a.crafValidade))}</p>`:`<p class="note">Informe a validade do CRAF para o app avisar antes de vencer.</p>`}
+  </div>
+  <div class="sec"><h2>Dados da arma</h2></div>
+  <div class="card"><dl class="dados">${d('Tipo',a.tipo)}${d('Calibre',a.calibre,1)}${d('Marca',a.marca)}${d('Modelo',a.modelo)}${d('Nº de série',a.serie,1)}${d('Aquisição',a.aquisicao?fd(a.aquisicao):'')}${d('Acervo',a.acervo)}${d('Grupo (habitualidade)',a.grupo)}</dl>
+    ${a.obs?`<p class="note">${esc(a.obs)}</p>`:''}</div>
+  <div class="sec"><h2>Anexos</h2></div>
+  <div class="card">${a.anexos&&a.anexos.length?anexos(a.anexos).replace('class="ax"','class="ax" style="margin-top:0"'):'<span class="sub">Nenhum anexo. Em Editar você pode guardar a foto ou o PDF do CRAF e a nota fiscal.</span>'}</div>`;
+}
+function guiaCard(g){
+  const s=g.validade?st(g.validade,7):{k:'none',t:'sem validade'};if(g.arq)s.k='none';
+  return `<div class="card"><div class="row"><div><div class="nm">${esc(g.finalidade||'Guia')}</div><div class="sub">${g.numero?'<span class="mono">'+esc(g.numero)+'</span>':''}${g.numero&&g.destino?' · ':''}${esc(g.destino||'')}</div></div>${g.arq?'<span class="pill none">arquivada</span>':pill(s)}</div>
+    ${g.arq?`<div class="reg-l"><span>emitida ${fd(g.emissao)}</span><span>venceu ${fd(g.validade)}</span></div>`:regua(g.emissao,g.validade,s.k)||`<div class="reg-l"><span></span><span>vence ${fd(g.validade)}</span></div>`}
+    ${g.obs?`<p class="note">${esc(g.obs)}</p>`:''}${anexos(g.anexos)}
+    <div class="acts"><button class="btn o s" data-act="edGuia" data-id="${esc(g.id)}">Editar</button>${!g.arq&&s.k==='bad'?`<button class="btn o s" data-act="arqGuia" data-id="${esc(g.id)}">Arquivar</button>`:''}</div></div>`;
+}
+function aGuias(a){
+  const L=guiasDe(a.id),h=hoje();
+  const at=L.filter(g=>!g.arq&&(!g.validade||g.validade>=h)).sort((x,y)=>(x.validade||'9').localeCompare(y.validade||'9'));
+  const ve=L.filter(g=>g.arq||(g.validade&&g.validade<h)).sort((x,y)=>(y.validade||'').localeCompare(x.validade||''));
+  return `<div class="sec"><h2>Guias de tráfego</h2><button class="btn s" data-act="novaGuia">+ Nova guia</button></div>`+
+  (L.length?'':`<div class="empty"><b>Nenhuma guia cadastrada</b>Lance a guia com a data de validade. O app avisa quando faltar 7 dias para vencer.</div>`)+
+  at.map(guiaCard).join('')+
+  (ve.length?`<div class="sec"><h2>Vencidas e arquivadas</h2></div>`+ve.map(guiaCard).join(''):'')+
+  `<p class="note">Guia de treino costuma valer até 6 meses e a de competição até 1 mês, nunca além da validade do CR. Vale a data impressa na sua guia.</p>`;
+}
+function aMunicao(a){
+  const m=munArma(a),C=m.C.slice().sort((x,y)=>(y.data||'').localeCompare(x.data||''));
+  return `<div class="sec"><h2>Munição</h2><button class="btn s" data-act="novoGasto" data-id="${esc(a.id)}">+ Lançar compra</button></div>
+  <div class="grid">
+    <div class="stat"><b>${brl(m.gasto)}</b><span>gasto total</span></div>
+    <div class="stat"><b>${fmt(m.cart)}</b><span>cartuchos comprados</span></div>
+    <div class="stat"><b>${m.custo!=null?brl(m.custo):'—'}</b><span>custo médio por tiro</span></div>
+    <div class="stat"><b>${m.cart?fmt(Math.max(0,m.estoque)):'—'}</b><span>estoque estimado</span></div>
+  </div>`+
+  (C.length?C.map(g=>`<button class="item" data-act="edGasto" data-id="${esc(g.id)}"><span class="row"><span><span class="nm">${esc(g.descricao||'Munição')}</span><br><span class="sub">${fd(g.data)}${g.qtd?' · '+pl(g.qtd,'cartucho'):''}${g.loja?' · '+esc(g.loja):''}</span></span><span class="v">${brl(g.valor)}${g.qtd&&g.valor?`<br><small style="font-weight:400;color:var(--mut)">${brl(g.valor/g.qtd)} cada</small>`:''}</span></span></button>`).join('')
+   :`<div class="empty"><b>Nenhuma compra lançada</b>Lance cada compra com quantidade e valor para ver o gasto, o custo por tiro e o estoque.</div>`)+
+  `<p class="note">Estoque estimado = cartuchos comprados menos os tiros que você anotar nos treinos (${fmt(m.tiros)} até agora).</p>`;
+}
+function treinoItem(t,comArma){
+  const a=armaDe(t.arma),det=[fd(t.data),t.tipo||'Treino',t.modalidade,comArma?(a?a.nome:[t.tipoArma||'Outra arma',t.calibre].filter(Boolean).join(' ')):'',t.evento?t.local:'',t.obs].filter(Boolean);
+  return `<button class="item" data-act="edTreino" data-id="${esc(t.id)}"><span class="row"><span class="bx"><span class="nm">${esc(t.evento||((t.tipo||'Treino')+(t.local?' · '+t.local:'')))}</span><br><span class="sub">${det.map(esc).join(' · ')}</span></span><span class="v">${t.tiros?pl(t.tiros,'tiro'):''}</span></span></button>`;
+}
+const grupoDe=t=>{const a=armaDe(t.arma);return t.grupo||(a&&a.grupo)||'Grupo não informado'};
+function habitGeral(){
+  const h=hoje(),ini=addD(h,-365),R=S.treinos.filter(t=>t.data>=ini&&t.data<=h),G={};
+  R.forEach(t=>{const k=grupoDe(t);(G[k]=G[k]||[]).push(t)});
+  return{R,G,dias:new Set(R.map(t=>t.data)).size,comp:R.filter(t=>t.tipo==='Competição').length};
+}
+function gHabit(){
+  const N=nivel(),H=habitGeral(),L=S.treinos.slice().sort((x,y)=>(y.data||'').localeCompare(x.data||'')),ks=Object.keys(H.G).sort((a,b)=>H.G[b].length-H.G[a].length);
+  return `<div class="sec"><h2>Habitualidade</h2><button class="btn s" data-act="novoTreino">+ Registrar</button></div>
+  <div class="grid">
+    <div class="stat"><b>${H.R.length}</b><span>participações em 12 meses</span></div>
+    <div class="stat"><b>${H.dias}</b><span>dias diferentes no clube</span></div>
+    <div class="stat"><b>${H.R.length-H.comp}</b><span>treinos</span></div>
+    <div class="stat"><b>${H.comp}</b><span>competições</span></div>
+  </div>`+
+  (ks.length?`<div class="sec"><h2>Por grupo de armas · últimos 12 meses</h2></div><div class="card"><div class="cats">${ks.map(k=>{const g=H.G[k],c=g.filter(t=>t.tipo==='Competição').length,d=new Set(g.map(t=>t.data)).size,ok=N&&(N.c?(g.length-c>=N.t&&c>=N.c):g.length>=N.t);
+    return `<div class="cat"><div class="row"><span><b>${esc(k)}</b><br><span class="sub">${pl(g.length-c,'treino')} · ${pl(c,'competição','competições')} · ${pl(d,'dia')}</span></span>${N?`<span class="pill ${ok?'ok':'info'}">${N.c?(g.length-c)+'/'+N.t+' e '+c+'/'+N.c:g.length+' de '+N.t}</span>`:''}</div>${N?`<div class="regua ${ok?'':'brass'}"><i style="width:${Math.min(100,g.length/(N.t+N.c)*100).toFixed(0)}%"></i></div>`:''}</div>`}).join('')}</div>
+    <p class="note">${N?'Meta do nível '+S.perfil.nivel+': '+esc(N.txt)+', por grupo de armas e em eventos distintos. ':''}A conta aqui usa cada participação lançada. Confirme com o clube como ele conta eventos do mesmo dia.</p></div>`:'')+
+  `<div class="sec"><h2>Histórico (${L.length})</h2></div>`+
+  (L.length?L.map(t=>treinoItem(t,true)).join(''):`<div class="empty"><b>Nenhuma participação lançada</b>Registre treinos e competições, com a sua arma ou com arma do clube.</div>`)+
+  `<p class="note">O que vale para a PF é a declaração de habitualidade emitida pelo clube. Este histórico é o seu controle.</p>`;
+}
+function aTreinos(a){
+  const h=habit(a),N=nivel(),L=S.treinos.filter(t=>t.arma===a.id).sort((x,y)=>(y.data||'').localeCompare(x.data||''));
+  const p=h.meta?Math.min(100,h.feito/h.meta*100):0;
+  return `<div class="sec"><h2>Treinos e competições</h2><button class="btn s" data-act="novoTreino">+ Registrar</button></div>`+
+  (N?`<div class="card"><div class="row"><div><div class="nm">Habitualidade</div><div class="sub">${esc(N.txt)}</div></div><span class="pill ${h.ok?'ok':'info'}">${esc(h.txt)}</span></div>
+    <div class="regua ${h.ok?'':'brass'}"><i style="width:${p.toFixed(0)}%"></i></div>
+    <p class="note">${h.ok?'Meta dos últimos 12 meses cumprida.':'Faltam '+pl(h.meta-h.feito,'evento')+' para fechar a meta dos últimos 12 meses.'}${a.grupo?' Conta por grupo de armas: '+esc(a.grupo.toLowerCase())+'.':''}</p></div>`:'')+
+  (L.length?L.map(t=>treinoItem(t)).join('')
+   :`<div class="empty"><b>Nenhum treino registrado</b>Anote cada ida ao clube. O app conta a habitualidade e desconta os tiros do estoque de munição.</div>`)+
+  `<p class="note">O que vale para a PF é a declaração de habitualidade do clube. Este registro é o seu controle.</p>`;
+}
+
+function telaGeral(){
+  $('#tTit').textContent={docs:'Meu CR e documentos',habit:'Habitualidade',gastos:'Gastos',regular:'Regularização'}[V.tab];
+  $('#tSub').textContent='Geral · vale para todas as armas';
+  tabs([['docs','Documentos'],['habit','Habitualidade'],['gastos','Gastos'],['regular','Regularização']]);
+  $('#view').innerHTML=V.tab==='gastos'?gGastos():V.tab==='regular'?gRegular():V.tab==='habit'?gHabit():gDocs();
+}
+function docCard(d){
+  const s=d.validade?st(d.validade,d.tipo==='CR'?60:30):{k:'none',t:'sem validade'};
+  return `<div class="card"><div class="row"><div><div class="nm">${esc(d.tipo==='Outro'?(d.titulo||'Documento'):d.tipo)}</div><div class="sub">${d.numero?'<span class="mono">'+esc(d.numero)+'</span>':''}${d.tipo!=='Outro'&&d.titulo?(d.numero?' · ':'')+esc(d.titulo):''}</div></div>${pill(s)}</div>
+    ${regua(d.emissao,d.validade,s.k)}
+    ${d.tipo==='CR'&&d.validade?`<p class="note">${esc(renov(d.validade))}</p>`:''}${d.obs?`<p class="note">${esc(d.obs)}</p>`:''}${anexos(d.anexos)}
+    <div class="acts"><button class="btn o s" data-act="edDoc" data-id="${esc(d.id)}">Editar</button></div></div>`;
+}
+function gDocs(){
+  const cr=S.docs.filter(d=>d.tipo==='CR'),ou=S.docs.filter(d=>d.tipo!=='CR').sort((a,b)=>(a.validade||'9').localeCompare(b.validade||'9'));
+  return `<div class="sec"><h2>Certificado de Registro (CR)</h2>${cr.length?'':'<button class="btn s" data-act="novoDoc" data-id="CR">+ Cadastrar CR</button>'}</div>`+
+  (cr.length?cr.map(docCard).join(''):`<div class="empty"><b>CR não cadastrado</b>O CR é o seu registro pessoal como atirador. É um só e cobre todas as armas. Cadastre o número e a validade.</div>`)+
+  `<div class="sec"><h2>Outros documentos</h2><button class="btn s" data-act="novoDoc" data-id="">+ Documento</button></div>`+
+  (ou.length?ou.map(docCard).join(''):`<div class="card"><span class="sub">Guarde aqui a filiação ao clube, o laudo psicológico, a capacidade técnica e as certidões, com foto ou PDF de cada um.</span></div>`)+
+  `<p class="note">O CRAF e as guias de tráfego ficam dentro de cada arma.</p>`;
+}
+function gGastos(){
+  const anos=[...new Set(S.gastos.map(g=>(g.data||'').slice(0,4)).filter(Boolean).concat(hoje().slice(0,4)))].sort().reverse();
+  if(!anos.includes(G.ano))G.ano=anos[0];
+  const L=S.gastos.filter(g=>(g.data||'').startsWith(G.ano)&&(!G.cat||g.categoria===G.cat)&&(!G.arma||g.arma===G.arma)).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const tot=sum(L,g=>g.valor),mes=MES.map((_,i)=>sum(L.filter(g=>+g.data.slice(5,7)===i+1),g=>g.valor)),mx=Math.max(1,...mes);
+  const cur=v=>v>=1000?(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':Math.round(v).toLocaleString('pt-BR');
+  const base=S.gastos.filter(g=>(g.data||'').startsWith(G.ano)&&(!G.arma||g.arma===G.arma)),tb=sum(base,g=>g.valor);
+  const chip=(act,k,l,on)=>`<button class="chip ${on?'on':''}" data-act="${act}" data-id="${esc(k)}">${esc(l)}</button>`;
+  const N=nivel(),m=munAno(G.ano);
+  return `<div class="sec"><h2>Planilha de gastos</h2><button class="btn s" data-act="novoGasto" data-id="">+ Lançar gasto</button></div>
+  <div class="filters">${anos.map(a=>chip('fAno',a,a,G.ano===a)).join('')}</div>
+  <div class="filters">${chip('fCat','','Tudo',!G.cat)}${CATS.map(c=>chip('fCat',c,c,G.cat===c)).join('')}</div>
+  ${S.armas.length>1?`<div class="filters">${chip('fArma','','Todas as armas',!G.arma)}${S.armas.map(a=>chip('fArma',a.id,a.nome,G.arma===a.id)).join('')}</div>`:''}
+  <div class="card"><div class="lbl">Total em ${G.ano}${G.cat?' · '+esc(G.cat):''}</div><div class="total">${brl(tot)}</div>
+    <div class="chart" role="img" aria-label="Gasto por mês em ${G.ano}, em reais">${mes.map(v=>`<div class="col"><span>${v?cur(v):''}</span><i class="${v?'':'z'}" style="height:${v?Math.max(3,v/mx*100*.82).toFixed(1):0}%"></i></div>`).join('')}</div>
+    <div class="months">${MES.map(x=>`<span>${x}</span>`).join('')}</div>
+    <p class="note">Gasto por mês, em reais.</p></div>
+  ${tb?`<div class="sec"><h2>Por categoria</h2></div><div class="card"><div class="cats">${CATS.map(c=>{const v=sum(base.filter(g=>g.categoria===c),g=>g.valor);return v?`<div class="cat"><div class="row"><span>${esc(c)}</span><b class="num">${brl(v)}</b></div><div class="regua brass"><i style="width:${(v/tb*100).toFixed(1)}%"></i></div></div>`:''}).join('')}</div></div>`:''}
+  ${N?`<div class="card"><div class="row"><div><div class="nm">Munição comprada em ${G.ano}</div><div class="sub">Limite do nível ${S.perfil.nivel}: ${fmt(N.mun)} cartuchos por ano</div></div><b class="num">${fmt(m.n)}</b></div><div class="regua ${m.n>N.mun?'bad':m.n>=N.mun*.9?'warn':'brass'}"><i style="width:${Math.min(100,m.n/N.mun*100).toFixed(1)}%"></i></div></div>`:''}
+  <div class="sec"><h2>Lançamentos (${L.length})</h2></div>`+
+  (L.length?`<div class="tbl"><table><thead><tr><th>Data</th><th>Descrição</th><th>Arma</th><th>Categoria</th><th class="r">Qtd</th><th class="r">Valor</th></tr></thead><tbody>${L.map(g=>{const a=armaDe(g.arma);return `<tr data-act="edGasto" data-id="${esc(g.id)}"><td class="num">${fd(g.data)}</td><td>${esc(g.descricao||'—')}${g.loja?`<br><span class="sub">${esc(g.loja)}</span>`:''}</td><td>${esc(a?a.nome:'Geral')}</td><td>${esc(g.categoria||'')}</td><td class="r">${g.qtd?fmt(g.qtd):''}</td><td class="r">${brl(g.valor)}</td></tr>`}).join('')}</tbody><tfoot><tr><td colspan="4">Total</td><td class="r">${fmt(sum(L,g=>g.qtd))||''}</td><td class="r">${brl(tot)}</td></tr></tfoot></table></div><p class="note">Toque numa linha para editar.</p>`
+   :`<div class="empty"><b>Nenhum gasto em ${G.ano}</b>Lance compras de munição, taxas, mensalidade do clube e acessórios para ver quanto o tiro custa por mês.</div>`);
+}
+function gRegular(){
+  const ck=chkResumo();
+  return `<div class="card" style="margin-top:16px"><label class="lbl" for="nivel">Minha categoria</label>
+    <select class="sel" id="nivel" style="margin-top:6px">${[[1,'Atirador desportivo · nível 1'],[2,'Atirador desportivo · nível 2'],[3,'Atirador desportivo · nível 3'],[0,'Outra (caçador, colecionador ou defesa)']].map(([v,l])=>`<option value="${v}" ${(S.perfil.nivel??1)==v?'selected':''}>${l}</option>`).join('')}</select>
+    <p class="note">A categoria define a meta de habitualidade e o limite anual de munição usados no app.</p></div>
+  <div class="card"><div class="row"><div class="nm">${ck.ok} de ${ck.tot} itens em dia</div></div><div class="regua ${ck.ok===ck.tot?'':'brass'}"><i style="width:${(ck.ok/ck.tot*100).toFixed(0)}%"></i></div>
+    <p class="note">Os itens redondos o app confere sozinho pelos seus lançamentos. Os quadrados você marca.</p></div>`+
+  checklist().map(([t,L])=>`<div class="sec"><h2>${t}</h2></div><div class="card">${L.map(i=>i.auto
+    ?`<div class="chk"><span class="mk auto ${i.auto}">${i.auto==='ok'?'✓':i.auto==='none'?'–':'!'}</span><span class="tx"><b>${esc(i.t)}</b><small>${esc(i.d)}</small><small><span class="pill ${i.auto}" style="margin-top:5px">${esc(i.st)}</span></small></span></div>`
+    :`<button class="chk" data-act="chk" data-id="${i.key}" aria-pressed="${i.on}"><span class="mk ${i.on?'ok':''}">${i.on?'✓':''}</span><span class="tx"><b>${esc(i.t)}</b><small>${esc(i.d)}</small></span></button>`).join('')}</div>`).join('')+
+  `<div class="sec"><h2>Prazos e números</h2></div><div class="card"><ul class="ref">
+    <li><b>CR</b>Vale 10 anos se foi concedido ou revalidado antes de 21/07/2023 e 3 anos se foi concedido depois. A renovação é pelo Sinarm-CAC e deve ser pedida até 30 dias antes do vencimento.</li>
+    <li><b>CRAF</b>Vale 3 anos. CRAFs concedidos antes de 21/07/2023 seguem o calendário da IN 330/2026, com vencimentos de agosto de 2026 a agosto de 2027 conforme o aniversário do titular. CRAF vencido trava a renovação do CR.</li>
+    <li><b>Guia de tráfego</b>Treino: até 6 meses. Competição: até 1 mês. Nunca além da validade do CR. Um dos sites consultados cita 36 meses, então confira sempre a data impressa na guia.</li>
+    <li><b>Transporte</b>Arma desmuniciada, munição separada, trajeto e finalidade iguais aos da guia. Leve CR, CRAF, guia e documento com foto.</li>
+    <li><b>Habitualidade do atirador</b>Nível 1: 8 treinos ou competições em 12 meses. Nível 2: 12 treinos e 4 competições. Nível 3: 20 treinos e 6 competições. Conta por grupo de armas, em eventos distintos.</li>
+    <li><b>Munição por ano</b>Nível 1: 4.000 cartuchos (8.000 de .22). Nível 2: 10.000 (16.000 de .22). Nível 3: 20.000 (32.000 de .22).</li>
+    <li><b>Laudos e certidões</b>Laudo psicológico e capacidade técnica valem 1 ano para os processos. Certidões negativas valem 90 dias.</li>
+    <li><b>Guarda</b>Cofre, caixa metálica ou recipiente que dificulte a retirada, com tranca, em local de alvenaria.</li>
+  </ul></div>
+  <div class="card"><div class="lbl">De onde vêm estas informações</div>
+    <p class="note" style="margin-top:6px">Resumo de pesquisa feita em 09/10/2026 em sites especializados, com base no Decreto 11.615/2023 e nas Instruções Normativas 311/2025, 322/2025 e 330/2026 da Polícia Federal. As regras mudam com frequência. Antes de decidir, confirme no Sinarm-CAC, na PF ou com seu despachante.</p>
+    <ul class="fontes">
+      <li><a href="https://legalmentearmado.com.br/blog/in-dg-pf-311-2025" target="_blank" rel="noopener">Legalmente Armado: IN DG/PF 311/2025</a></li>
+      <li><a href="https://cacdigital.app.br/os-documentos-que-o-cac-precisa-ter-em-maos-em-uma-fiscalizacao/" target="_blank" rel="noopener">CAC Digital: documentos na fiscalização</a></li>
+      <li><a href="https://cacdigital.app.br/como-funciona-a-renovacao-do-cr-e-o-que-evita-o-indeferimento/" target="_blank" rel="noopener">CAC Digital: renovação do CR</a></li>
+      <li><a href="https://cacdigital.app.br/entenda-o-sistema-de-niveis-do-cac-e-o-que-cada-categoria-libera-na-pratica/" target="_blank" rel="noopener">CAC Digital: níveis do atirador</a></li>
+      <li><a href="https://legalmentearmado.com.br/blog/como-renovar-craf-no-sinarm-cac-2026" target="_blank" rel="noopener">Legalmente Armado: renovação do CRAF em 2026</a></li>
+      <li><a href="https://www.ciminosarmas.com.br/como-emitir-gte-cac-policia-federal-2025" target="_blank" rel="noopener">Ciminos Armas: guia de tráfego pela PF</a></li>
+      <li><a href="https://www.ciminosarmas.com.br/habitualidade-cac-tiro-esportivo" target="_blank" rel="noopener">Ciminos Armas: habitualidade</a></li>
+      <li><a href="https://www.gov.br/pf/pt-br" target="_blank" rel="noopener">Polícia Federal (gov.br/pf)</a></li>
+    </ul></div>`;
+}
+
+/* ---------- formulários ---------- */
+let F=null;
+const sheetOpen=()=>!$('#sheet').hidden;
+function openForm(o){F=o;F.d={...o.data};F.ax=(o.data.anexos||[]).slice();F.novos=[];F.rem=[];F.busy=false;drawForm();$('#sheet').hidden=false;$('#form').scrollTop=0}
+function collect(){if(!F)return;F.fields.forEach(f=>{if(!f.k)return;const el=$('#f_'+f.k);if(el)F.d[f.k]=el.value.trim()})}
+function fieldHtml(f){
+  let v=F.d[f.k]??'';const id='f_'+f.k;let c;if(typeof v==='number')v=String(v).replace('.',',');
+  if(f.type==='select'){const ops=f.opts.slice();if(v!==''&&!ops.some(o=>String(Array.isArray(o)?o[0]:o)===String(v)))ops.push(v);c=`<select id="${id}">${f.blank===false?'':'<option value="">—</option>'}${ops.map(o=>{const[val,lab]=Array.isArray(o)?o:[o,o];return `<option value="${esc(val)}" ${String(v)===String(val)?'selected':''}>${esc(lab)}</option>`}).join('')}</select>`}
+  else if(f.type==='area')c=`<textarea id="${id}">${esc(v)}</textarea>`;
+  else c=`<input id="${id}" type="${f.type==='date'?'date':'text'}" value="${esc(v)}" ${f.type==='num'?'inputmode="decimal"':''} ${f.type==='int'?'inputmode="numeric"':''} placeholder="${esc(f.ph||'')}" autocomplete="off">`;
+  return `<div><label for="${id}">${esc(f.l)}</label>${c}${f.hint?`<div class="hint">${esc(f.hint)}</div>`:''}</div>`;
+}
+function drawForm(){
+  let h=`<h2>${esc(F.title)}</h2>`;const fs=F.fields;
+  for(let i=0;i<fs.length;i++){const f=fs[i];
+    if(f.sec){h+=`<h3>${esc(f.sec)}</h3>`;continue}
+    if(f.half&&fs[i+1]&&fs[i+1].half){h+=`<div class="two">${fieldHtml(f)}${fieldHtml(fs[i+1])}</div>`;i++}
+    else h+=fieldHtml(f);}
+  if(F.anexos!==false){
+    h+=`<h3>Anexos</h3>`+F.ax.map((a,i)=>`<div class="axe"><span>${/^image\//.test(a.tipo||'')?'Foto':'PDF'} · ${esc(a.nome)}</span><button class="btn o s" data-act="fRm" data-id="${i}">Remover</button></div>`).join('')+
+      (assets?`<button class="btn o" data-act="fAdd" style="margin-top:10px">${F.busy?'Enviando…':'+ Foto ou PDF'}</button><div class="hint">JPG, PNG ou PDF, até 20 MB.</div>`:`<div class="hint" style="margin-top:8px">Anexos não estão disponíveis nesta tela.</div>`);
+  }
+  h+=`<div class="fa">${F.novo?'':'<button class="btn d" data-act="fDel">Apagar</button>'}<button class="btn o" data-act="fCancel">Cancelar</button><button class="btn" data-act="fSave">Salvar</button></div>`;
+  $('#form').innerHTML=h;
+}
+async function closeForm(cancel){
+  const f=F;F=null;$('#sheet').hidden=true;
+  if(cancel&&assets&&f)for(const a of f.novos){try{await assets.delete(a.id)}catch(e){}}
+  dirty=false;render();
+}
+async function shrink(file){
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size<1.5e6)return file;
+  try{const bmp=await createImageBitmap(file),sc=Math.min(1,2200/Math.max(bmp.width,bmp.height));
+    const c=document.createElement('canvas');c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.85));return b&&b.size<file.size?b:file}catch(e){return file}
+}
+$('#file').addEventListener('change',async e=>{
+  const file=e.target.files[0];e.target.value='';if(!file||!F||!assets)return;
+  if(!/^(image\/(jpeg|png|webp)|application\/pdf)$/.test(file.type)){toast('Formato não aceito. Use JPG, PNG ou PDF.');return}
+  collect();F.busy=true;drawForm();
+  try{const b=await shrink(file),r=await assets.upload(b,{type:b.type||file.type});
+    if(F){const a={id:r.id,nome:file.name||'anexo',tipo:r.contentType};F.ax.push(a);F.novos.push(a)}
+  }catch(err){toast({too_large:'Arquivo grande demais (máximo 20 MB).',unsupported_type:'Formato não aceito. Use JPG, PNG ou PDF.',quota_or_state:'Espaço de anexos cheio. Remova algum anexo antigo.',rate_limited:'Muitos envios seguidos. Espere um pouco.'}[err&&err.code]||'Não foi possível enviar o anexo.')}
+  if(F){F.busy=false;drawForm()}
+});
+async function saveForm(){
+  collect();const d=F.d;
+  for(const f of F.fields){if(f.req&&!d[f.k]){toast('Preencha: '+f.l);return}
+    if(f.k&&(f.type==='num'||f.type==='int')){const n=num(d[f.k]);if(d[f.k]&&n==null){toast('Número inválido em: '+f.l);return}d[f.k]=n}}
+  if(F.busy){toast('Espere o anexo terminar de enviar');return}
+  const o={...F.data,...d,id:F.data.id||uid(F.col[0])};
+  if(F.anexos!==false)o.anexos=F.ax;
+  if(F.novo&&!o.criado)o.criado=new Date().toISOString();
+  Object.keys(o).forEach(k=>{if(o[k]===''||o[k]==null)delete o[k]});
+  const rem=F.rem,col=F.col,after=F.after;
+  const ok=await put(col,o);
+  if(ok&&assets)for(const a of rem){try{await assets.delete(a.id)}catch(e){}}
+  F.novos=[];await closeForm(false);if(ok)toast('Salvo');if(after)after(o);
+}
+const fArma=(a)=>({col:'armas',title:a?'Editar arma':'Nova arma',novo:!a,data:a||{tipo:'Pistola',acervo:'Tiro desportivo',sistema:'Sinarm-CAC (PF)'},fields:[
+  {k:'nome',l:'Nome da arma',req:1,ph:'Ex.: Taurus G3c T.O.R.O.'},
+  {k:'tipo',l:'Tipo',type:'select',opts:TIPOS,half:1},{k:'calibre',l:'Calibre',half:1,ph:'9mm'},
+  {k:'marca',l:'Marca',half:1},{k:'modelo',l:'Modelo',half:1},
+  {k:'serie',l:'Nº de série',half:1},{k:'aquisicao',l:'Data de aquisição',type:'date',half:1},
+  {k:'acervo',l:'Acervo',type:'select',opts:['Tiro desportivo','Caça','Coleção','Defesa pessoal'],half:1},{k:'grupo',l:'Grupo (habitualidade)',type:'select',opts:GRUPOS,half:1},
+  {sec:'Registro (CRAF)'},
+  {k:'sistema',l:'Sistema',type:'select',opts:['Sinarm-CAC (PF)','Sigma (Exército)','Sinarm (PF)'],half:1},{k:'registro',l:'Nº do registro',half:1},
+  {k:'crafEmissao',l:'Emissão do CRAF',type:'date',half:1},{k:'crafValidade',l:'Validade do CRAF',type:'date',half:1},
+  {k:'obs',l:'Observações',type:'area'}],
+  after:o=>{if(!a){V={scr:'arma',arma:o.id,tab:'registro'};render();window.scrollTo(0,0)}}});
+const fGuia=(g)=>({col:'guias',title:g?'Editar guia':'Nova guia de tráfego',novo:!g,data:g||{arma:V.arma,finalidade:'Treinamento',emissao:hoje()},fields:[
+  {k:'finalidade',l:'Finalidade',type:'select',opts:FINS,blank:false,half:1},{k:'numero',l:'Nº da guia',half:1},
+  {k:'destino',l:'Destino ou trajeto',ph:'Ex.: Clube de tiro em Rio Verde'},
+  {k:'emissao',l:'Emissão',type:'date',half:1},{k:'validade',l:'Validade',type:'date',half:1,req:1,hint:'Treino: até 6 meses. Competição: até 1 mês.'},
+  {k:'obs',l:'Observações',type:'area'}]});
+const fDoc=(d,tipo)=>({col:'docs',title:d?'Editar documento':'Novo documento',novo:!d,data:d||{tipo:tipo||'Filiação a clube'},fields:[
+  {k:'tipo',l:'Tipo',type:'select',opts:DOCT,blank:false},
+  {k:'titulo',l:'Descrição',ph:'Ex.: nome do clube, categoria do CR'},
+  {k:'numero',l:'Número'},
+  {k:'emissao',l:'Emissão',type:'date',half:1},{k:'validade',l:'Validade',type:'date',half:1},
+  {k:'obs',l:'Observações',type:'area'}]});
+const fGasto=(g,armaId)=>({col:'gastos',title:g?'Editar gasto':(armaId?'Compra de munição':'Novo gasto'),novo:!g,data:g||{data:hoje(),categoria:'Munição',arma:armaId||(S.armas.length===1?S.armas[0].id:'')},fields:[
+  {k:'data',l:'Data',type:'date',half:1,req:1},{k:'categoria',l:'Categoria',type:'select',opts:CATS,blank:false,half:1},
+  {k:'arma',l:'Arma',type:'select',opts:S.armas.map(a=>[a.id,a.nome]).concat([['','Geral (nenhuma arma)']]),blank:false},
+  {k:'descricao',l:'Descrição',ph:'Ex.: CBC 9mm 124gr, caixa com 50'},
+  {k:'qtd',l:'Quantidade (cartuchos)',type:'int',half:1,ph:'50'},{k:'valor',l:'Valor total (R$)',type:'num',half:1,req:1,ph:'0,00'},
+  {k:'loja',l:'Loja'}]});
+const fTreino=(t)=>({col:'treinos',title:t?'Editar registro':'Registrar treino ou competição',novo:!t,anexos:false,data:t||{arma:V.scr==='arma'?V.arma:'',data:hoje(),tipo:'Treino'},fields:[
+  {k:'data',l:'Data',type:'date',half:1,req:1},{k:'tipo',l:'Tipo',type:'select',opts:['Treino','Competição'],blank:false,half:1},
+  {k:'arma',l:'Arma',type:'select',opts:S.armas.map(a=>[a.id,a.nome]).concat([['','Outra arma (do clube ou emprestada)']]),blank:false},
+  {k:'evento',l:'Nome do evento',ph:'Ex.: 2ª etapa de tiro rápido'},
+  {k:'local',l:'Clube ou local'},
+  {k:'modalidade',l:'Modalidade',half:1},{k:'tiros',l:'Tiros disparados',type:'int',ph:'50',half:1},
+  {sec:'Se foi com outra arma'},
+  {k:'tipoArma',l:'Tipo de arma',half:1,ph:'Carabina'},{k:'calibre',l:'Calibre',half:1,ph:'.22 LR'},
+  {k:'grupo',l:'Grupo de armas',type:'select',opts:GRUPOS},
+  {k:'obs',l:'Observações',type:'area'}]});
+
+/* ---------- ações ---------- */
+function go(v){V=v;render();window.scrollTo(0,0)}
+const ACT={
+  home:()=>go({scr:'home'}),
+  arma:b=>go({scr:'arma',arma:b.dataset.id,tab:'resumo'}),
+  armaTab:b=>{const[id,t]=b.dataset.id.split('|');go({scr:'arma',arma:id,tab:t})},
+  geral:b=>go({scr:'geral',tab:b.dataset.id}),
+  tab:b=>go({...V,tab:b.dataset.id}),
+  novaArma:()=>openForm(fArma()),
+  edArma:b=>openForm(fArma(armaDe(b.dataset.id))),
+  novaGuia:()=>openForm(fGuia()),
+  edGuia:b=>openForm(fGuia(S.guias.find(g=>g.id===b.dataset.id))),
+  arqGuia:async b=>{const g=S.guias.find(x=>x.id===b.dataset.id);if(g){await put('guias',{...g,arq:true});render();toast('Guia arquivada')}},
+  novoDoc:b=>openForm(fDoc(null,b.dataset.id)),
+  edDoc:b=>openForm(fDoc(S.docs.find(d=>d.id===b.dataset.id))),
+  novoGasto:b=>openForm(fGasto(null,b.dataset.id)),
+  edGasto:b=>openForm(fGasto(S.gastos.find(g=>g.id===b.dataset.id))),
+  novoTreino:()=>openForm(fTreino()),
+  edTreino:b=>openForm(fTreino(S.treinos.find(t=>t.id===b.dataset.id))),
+  ver:b=>{$('#lb img').src=blob(b.dataset.id);$('#lb').hidden=false},
+  lbClose:()=>{$('#lb').hidden=true;$('#lb img').removeAttribute('src')},
+  chk:b=>{const c={...(S.perfil.checks||{})};c[b.dataset.id]=!c[b.dataset.id];putPerfil({...S.perfil,checks:c});render()},
+  fAno:b=>{G.ano=b.dataset.id;render()},fCat:b=>{G.cat=b.dataset.id;render()},fArma:b=>{G.arma=b.dataset.id;render()},
+  fAdd:()=>{if(F&&!F.busy)$('#file').click()},
+  fRm:b=>{collect();const a=F.ax.splice(+b.dataset.id,1)[0];if(a)F.rem.push(a);drawForm()},
+  fCancel:()=>closeForm(true),
+  fSave:()=>saveForm(),
+  fDel:async b=>{
+    if(!b.dataset.sure){b.dataset.sure=1;b.textContent=F.col==='armas'?'Apaga guias e treinos. Confirmar':'Toque de novo';return}
+    const id=F.data.id,col=F.col,rem=F.rem;F.novos=[];
+    if(col==='armas'){for(const g of guiasDe(id))await del('guias',g.id);for(const t of S.treinos.filter(t=>t.arma===id))await del('treinos',t.id);V={scr:'home'}}
+    await del(col,id);if(assets)for(const a of rem){try{await assets.delete(a.id)}catch(e){}}
+    await closeForm(false);toast('Apagado');
+  }
+};
+document.addEventListener('click',e=>{
+  if(e.target.id==='sheet'){closeForm(true);return}
+  if(e.target.id==='lb'){ACT.lbClose();return}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const f=ACT[b.dataset.act];if(f)f(b,e);
+});
+document.addEventListener('change',e=>{if(e.target.id==='nivel'){putPerfil({...S.perfil,nivel:+e.target.value});render()}});
+
+/* ================= Armas Adam — conta, offline e sincronização ================= */
+const SB_URL='https://uoezohbbpkksvufusyic.supabase.co',SB_KEY='sb_publishable_P10eo4efuC-Y6zT8t3mbGw_F75W73b-';
+let SES=null,DEL={},SYNCING=false,SYNC_T=null,KEEP=true;
+const BU={};            // id do anexo -> URL local do arquivo
+const K=(n)=>n+(SES?'_'+SES.uid:'');
+const LSg=(k)=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const LSs=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const LSd=(k)=>{try{localStorage.removeItem(k)}catch(e){}};
+const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+const b64=u=>btoa(String.fromCharCode(...new Uint8Array(u))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+
+/* ---------- sessão ---------- */
+function loadSes(){
+  let s=null;try{s=JSON.parse(LSg('armas_ses')||sessionStorage.getItem('armas_ses')||'null')}catch(e){}
+  if(s&&s.uid){SES=s;KEEP=!!LSg('armas_ses')}
+}
+function saveSes(){
+  LSd('armas_ses');try{sessionStorage.removeItem('armas_ses')}catch(e){}
+  if(!SES)return;
+  if(KEEP)LSs('armas_ses',JSON.stringify(SES));else try{sessionStorage.setItem('armas_ses',JSON.stringify(SES))}catch(e){}
+}
+function setSes(j){
+  SES={at:j.access_token,rt:j.refresh_token,exp:Date.now()+((j.expires_in||3600)*1000)-60000,uid:j.user.id,email:j.user.email};
+  saveSes();
+}
+async function auth(path,body){
+  const r=await fetch(SB_URL+path,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  let j={};try{j=await r.json()}catch(e){}
+  return{ok:r.ok,status:r.status,j};
+}
+const ERR={
+  'Invalid login credentials':'E-mail ou senha incorretos.',
+  'Email not confirmed':'Confirme seu e-mail primeiro. Procure a mensagem na caixa de entrada.',
+  'User already registered':'Já existe uma conta com esse e-mail. Toque em Entrar.',
+  'Password should be at least 6 characters.':'A senha precisa de pelo menos 6 caracteres.'
+};
+const errMsg=r=>ERR[r.j.msg]||ERR[r.j.message]||ERR[r.j.error_description]||(r.status===429?'Muitas tentativas. Espere um pouco.':'Não deu certo. Confira os dados e a internet.');
+async function ensureTok(){
+  if(!SES)throw new Error('sem sessão');
+  if(Date.now()<SES.exp)return;
+  const r=await auth('/auth/v1/token?grant_type=refresh_token',{refresh_token:SES.rt});
+  if(r.ok){setSes(r.j);return}
+  if(r.status===400||r.status===401||r.status===403){sessaoExpirou();throw new Error('expirou')}
+  throw new Error('rede');
+}
+function sessaoExpirou(){SES=null;saveSes();mostraLogin('Sua sessão expirou. Entre de novo.')}
+
+/* ---------- dados locais por usuário ---------- */
+function carregaLocal(){
+  let d=null;try{d=JSON.parse(LSg(K('armas_db'))||'null')}catch(e){}
+  COLS.forEach(c=>S[c]=(d&&d[c])||[]);
+  S.perfil={nivel:1,checks:{},...((d&&d.perfil)||{})};
+  DEL=(d&&d.del)||{};
+}
+function persist(){
+  if(!SES)return;
+  const o={perfil:S.perfil,del:DEL};COLS.forEach(c=>o[c]=S[c]);
+  LSs(K('armas_db'),JSON.stringify(o));
+}
+function limpaLocal(){if(!SES)return;['armas_db','armas_face','armas_face_no','armas_last'].forEach(n=>LSd(K(n)))}
+
+/* ---------- camada de dados (substitui o banco da versão web) ---------- */
+db={doc:p=>({
+  set:async o=>{o.upd=Date.now();const[c,i]=p.split('/');delete DEL[c+'/'+i];persist();agenda();return true},
+  delete:async()=>{DEL[p]=Date.now();persist();agenda()}
+})};
+
+/* ---------- anexos (fotos e PDFs) guardados no aparelho e enviados à nuvem ---------- */
+let IDB=null;
+function idb(){return IDB||(IDB=new Promise((res,rej)=>{const q=indexedDB.open('armas_adam',1);q.onupgradeneeded=()=>q.result.createObjectStore('b',{keyPath:'id'});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}))}
+async function bAll(){const d=await idb();return new Promise(r=>{const q=d.transaction('b').objectStore('b').getAll();q.onsuccess=()=>r(q.result||[]);q.onerror=()=>r([])})}
+async function bPut(o){const d=await idb();return new Promise(r=>{const t=d.transaction('b','readwrite');t.objectStore('b').put(o);t.oncomplete=()=>r(true);t.onerror=()=>r(false)})}
+async function bDel(id){const d=await idb();return new Promise(r=>{const t=d.transaction('b','readwrite');t.objectStore('b').delete(id);t.oncomplete=()=>r(true);t.onerror=()=>r(false)})}
+const bKey=id=>(SES?SES.uid:'x')+'/'+id;
+async function carregaBlobs(){
+  try{const L=await bAll();L.forEach(o=>{if(o.u===(SES&&SES.uid)&&o.blob)BU[o.id]=URL.createObjectURL(o.blob)})}catch(e){}
+}
+assets={
+  upload:async(b,o)=>{
+    const id='x'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    const type=(o&&o.type)||b.type||'application/octet-stream';
+    if(b.size>20e6)throw{code:'too_large'};
+    await bPut({id,u:SES.uid,blob:b,type,sent:false});
+    BU[id]=URL.createObjectURL(b);agenda();
+    return{id,contentType:type};
+  },
+  delete:async id=>{
+    await bDel(id);delete BU[id];
+    if(SES&&navigator.onLine){try{await ensureTok();await fetch(SB_URL+'/storage/v1/object/anexos/'+bKey(id),{method:'DELETE',headers:{apikey:SB_KEY,Authorization:'Bearer '+SES.at}})}catch(e){}}
+  }
+};
+function blobUrl(id){return BU[id]||''}
+
+/* ---------- sincronização ---------- */
+const stat=(t,k)=>{document.querySelectorAll('.syncSt').forEach(b=>{b.textContent=t;b.dataset.st=k})};
+function agenda(){clearTimeout(SYNC_T);stat('Salvo no aparelho','0');SYNC_T=setTimeout(sync,500)}
+function rest(path,o={}){return fetch(SB_URL+'/rest/v1/'+path,{...o,headers:{apikey:SB_KEY,Authorization:'Bearer '+SES.at,'Content-Type':'application/json',...(o.headers||{})}})}
+async function sync(){
+  if(SYNCING||!SES)return;
+  if(!navigator.onLine){stat('Sem internet · salvo no aparelho','0');return}
+  SYNCING=true;stat('Sincronizando…','1');
+  try{
+    await ensureTok();
+    /* 1) baixa tudo */
+    let rows=[],from=0;
+    for(;;){
+      const r=await rest('registros?select=col,id,data,upd,deleted&order=col,id',{headers:{Range:from+'-'+(from+999)}});
+      if(!r.ok)throw new Error('GET '+r.status);
+      const p=await r.json();rows=rows.concat(p);if(p.length<1000)break;from+=1000;
+    }
+    const R={};rows.forEach(x=>R[x.col+'/'+x.id]=x);
+    /* 2) mescla: vence o que foi mudado por último */
+    const L={};COLS.forEach(c=>S[c].forEach(d=>L[c+'/'+d.id]={c,d}));
+    L['config/perfil']={c:'config',d:{...S.perfil,id:'perfil'}};
+    const up=[];let mudou=false;
+    new Set([...Object.keys(L),...Object.keys(R),...Object.keys(DEL)]).forEach(k=>{
+      const[c,...ri]=k.split('/'),id=ri.join('/'),l=L[k],r=R[k];
+      const ld=DEL[k]||0,lu=l?(l.d.upd||0):0,lt=Math.max(lu,ld),ldel=ld>=lu&&ld>0;
+      if(r&&(r.upd||0)>=lt){
+        if((r.upd||0)===lt&&lt>0)return;                        // igual
+        mudou=true;
+        if(r.deleted){DEL[k]=r.upd;if(c==='config')return;S[c]=S[c].filter(x=>x.id!==id)}
+        else{delete DEL[k];
+          if(c==='config'){S.perfil={nivel:1,checks:{},...r.data,upd:r.upd}}
+          else{S[c]=S[c].filter(x=>x.id!==id).concat({...r.data,upd:r.upd})}}
+      }else if(lt>0||l){
+        const t=lt||Date.now();
+        if(l&&!l.d.upd&&!ldel){l.d.upd=t}
+        up.push({user_id:SES.uid,col:c,id,data:ldel?{}:(c==='config'?{...S.perfil}:{...l.d}),upd:t,deleted:!!ldel});
+      }
+    });
+    persist();
+    /* 3) envia o que é mais novo aqui */
+    for(let i=0;i<up.length;i+=200){
+      const r=await rest('registros?on_conflict=user_id,col,id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(up.slice(i,i+200))});
+      if(!r.ok)throw new Error('POST '+r.status);
+    }
+    /* 4) anexos */
+    await sincAnexos();
+    stat('Sincronizado','1');LSs(K('armas_last'),String(Date.now()));
+    if(mudou){if(sheetOpen())dirty=true;else render()}
+  }catch(e){
+    stat(e&&e.message==='expirou'?'Entre de novo':'Sem conexão · salvo no aparelho','0');
+  }finally{SYNCING=false}
+}
+async function sincAnexos(){
+  const L=await bAll(),mine=L.filter(o=>o.u===SES.uid),have=new Set(mine.map(o=>o.id));
+  for(const o of mine){
+    if(o.sent||!o.blob)continue;
+    const r=await fetch(SB_URL+'/storage/v1/object/anexos/'+bKey(o.id),{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SES.at,'x-upsert':'true','Content-Type':o.type},body:o.blob});
+    if(r.ok){o.sent=true;await bPut(o)}
+  }
+  const want=[];COLS.forEach(c=>S[c].forEach(d=>(d.anexos||[]).forEach(a=>{if(!have.has(a.id))want.push(a)})));
+  let novo=false;
+  for(const a of want){
+    try{
+      const r=await fetch(SB_URL+'/storage/v1/object/authenticated/anexos/'+bKey(a.id),{headers:{apikey:SB_KEY,Authorization:'Bearer '+SES.at}});
+      if(!r.ok)continue;const b=await r.blob();
+      await bPut({id:a.id,u:SES.uid,blob:b,type:a.tipo||b.type,sent:true});BU[a.id]=URL.createObjectURL(b);novo=true;
+    }catch(e){}
+  }
+  if(novo&&!sheetOpen())render();
+}
+window.addEventListener('online',()=>sync());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
+setInterval(()=>{if(!document.hidden)sync()},90000);
+
+/* ---------- tela de abertura e login ---------- */
+const LN=$('#launch');
+let modo='entrar';
+function faceId(){return LSg(K('armas_face'))}
+function mostraLogin(aviso){
+  LN.hidden=false;document.body.classList.add('lk');
+  const tem=!!SES;
+  $('#lgBox').innerHTML=tem?
+    `<div class="lg-hi">Olá,<b>${esc(SES.email)}</b></div>
+     <button class="lg-btn" id="lgEnter">${faceId()?'Entrar com Face ID':'Entrar'}</button>
+     ${aviso?`<p class="lg-err">${esc(aviso)}</p>`:''}
+     <button class="lg-lnk" id="lgOut">Entrar com outra conta</button>`
+   :`<div class="lg-tabs"><button data-m="entrar" class="${modo==='entrar'?'on':''}">Entrar</button><button data-m="criar" class="${modo==='criar'?'on':''}">Criar conta</button></div>
+     <form id="lgForm" autocomplete="on">
+       <input id="lgEmail" name="username" type="email" inputmode="email" autocomplete="username" placeholder="E-mail" required autocapitalize="off" autocorrect="off">
+       <input id="lgPass" name="password" type="password" autocomplete="${modo==='entrar'?'current-password':'new-password'}" placeholder="Senha" required minlength="6">
+       <label class="lg-chk"><input type="checkbox" id="lgKeep" checked> Continuar conectado</label>
+       <p class="lg-err" id="lgErr">${aviso?esc(aviso):''}</p>
+       <button class="lg-btn" id="lgGo" type="submit">${modo==='entrar'?'Entrar':'Criar conta'}</button>
+     </form>
+     ${modo==='entrar'?'<button class="lg-lnk" id="lgForgot">Esqueci a senha</button>':'<p class="lg-fine">Ao criar a conta você concorda em guardar seus dados de armas apenas para o seu uso.</p>'}`;
+  if(tem){
+    $('#lgEnter').onclick=entrarSessao;
+    $('#lgOut').onclick=()=>{SES=null;saveSes();mostraLogin()};
+    if(faceId())setTimeout(()=>{try{entrarSessao()}catch(e){}},350);
+  }else{
+    document.querySelectorAll('.lg-tabs button').forEach(b=>b.onclick=()=>{modo=b.dataset.m;mostraLogin()});
+    $('#lgForm').onsubmit=enviaLogin;
+    const fg=$('#lgForgot');if(fg)fg.onclick=esqueci;
+  }
+}
+async function enviaLogin(e){
+  e.preventDefault();
+  const em=$('#lgEmail').value.trim(),pw=$('#lgPass').value,er=$('#lgErr'),bt=$('#lgGo');
+  KEEP=$('#lgKeep').checked;er.textContent='';bt.disabled=true;bt.textContent='Aguarde…';
+  try{
+    if(modo==='entrar'){
+      const r=await auth('/auth/v1/token?grant_type=password',{email:em,password:pw});
+      if(!r.ok){er.textContent=errMsg(r);return}
+      setSes(r.j);abreApp(true);
+    }else{
+      const r=await auth('/auth/v1/signup',{email:em,password:pw});
+      if(!r.ok){er.textContent=errMsg(r);return}
+      if(r.j.access_token){setSes(r.j);abreApp(true)}
+      else{modo='entrar';mostraLogin('Conta criada. Enviamos um e-mail de confirmação: abra o link e depois entre.')}
+    }
+  }catch(x){er.textContent='Sem internet. Para entrar pela primeira vez é preciso estar conectado.'}
+  finally{bt.disabled=false;if(bt.isConnected)bt.textContent=modo==='entrar'?'Entrar':'Criar conta'}
+}
+async function esqueci(){
+  const em=$('#lgEmail').value.trim(),er=$('#lgErr');
+  if(!em){er.textContent='Digite seu e-mail e toque de novo em "Esqueci a senha".';return}
+  try{const r=await auth('/auth/v1/recover',{email:em});er.textContent=r.ok?'Enviamos um e-mail para trocar a senha.':errMsg(r)}catch(e){er.textContent='Sem internet.'}
+}
+async function entrarSessao(){
+  if(faceId()){
+    try{
+      await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:'public-key',id:unb64(faceId()),transports:['internal']}],userVerification:'required',timeout:60000}});
+    }catch(e){toast('Face ID não confirmado');return}
+  }
+  abreApp(false);
+}
+function abreApp(novo){
+  carregaLocal();
+  LN.hidden=true;document.body.classList.remove('lk');
+  ready=true;$('#ban').hidden=true;
+  carregaBlobs().then(()=>{render();sync()});
+  render();
+  if(novo&&'credentials' in navigator&&window.PublicKeyCredential&&!faceId()&&!LSg(K('armas_face_no')))setTimeout(oferecerFace,900);
+}
+async function oferecerFace(){
+  if(!confirm('Quer entrar neste aparelho usando o Face ID?'))return LSs(K('armas_face_no'),'1');
+  await ligaFace();
+}
+async function ligaFace(){
+  try{
+    const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:'Armas Adam'},user:{id:rnd(16),name:SES.email,displayName:SES.email},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000}});
+    LSs(K('armas_face'),b64(c.rawId));toast('Face ID ativado');return true;
+  }catch(e){toast('Não foi possível ativar o Face ID');return false}
+}
+
+/* ---------- ajustes da conta ---------- */
+function abreCfg(){
+  const face=!!faceId(),ok='PublicKeyCredential' in window;
+  $('#cfgForm').innerHTML=`<h2>Conta</h2><p class="sub" style="margin-top:4px">${esc(SES?SES.email:'')}</p>
+   <h3>Segurança</h3>
+   ${ok?`<button class="btn o" id="cfFace" style="width:100%;margin-top:6px">${face?'Desativar Face ID':'Ativar Face ID'}</button><div class="hint">Com o Face ID ligado, o app pede o seu rosto sempre que abrir.</div>`:'<div class="hint">Este aparelho não oferece Face ID para o app.</div>'}
+   <h3>Sincronização</h3>
+   <div class="hint" id="cfLast"></div>
+   <button class="btn o" id="cfSync" style="width:100%;margin-top:8px">Sincronizar agora</button>
+   <h3>Cópia dos dados</h3>
+   <button class="btn o" id="cfExp" style="width:100%;margin-top:6px">Baixar cópia (arquivo)</button>
+   <button class="btn o" id="cfImp" style="width:100%;margin-top:8px">Importar cópia</button>
+   <input type="file" id="cfFile" accept="application/json,.json" hidden>
+   <h3>Sair</h3>
+   <button class="btn d" id="cfOut" style="width:100%;margin-top:6px">Sair da conta</button>
+   <div class="hint">Os dados continuam salvos na nuvem. Ao sair, o aparelho apaga a cópia local.</div>
+   <div class="fa"><button class="btn o" id="cfClose">Fechar</button></div>`;
+  const l=+LSg(K('armas_last'));$('#cfLast').textContent=l?'Última sincronização: '+new Date(l).toLocaleString('pt-BR'):'Ainda não sincronizou neste aparelho.';
+  $('#cfg').hidden=false;
+  $('#cfClose').onclick=()=>$('#cfg').hidden=true;
+  $('#cfSync').onclick=async()=>{await sync();abreCfg()};
+  const f=$('#cfFace');if(f)f.onclick=async()=>{if(faceId()){LSd(K('armas_face'));LSs(K('armas_face_no'),'1');abreCfg()}else{if(await ligaFace())abreCfg()}};
+  $('#cfExp').onclick=exporta;
+  $('#cfImp').onclick=()=>$('#cfFile').click();
+  $('#cfFile').onchange=importa;
+  $('#cfOut').onclick=sair;
+}
+function exporta(){
+  const o={app:'armas-adam',v:1,perfil:S.perfil};COLS.forEach(c=>o[c]=S[c]);
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));
+  a.download='armas-adam-copia-'+hoje()+'.json';document.body.appendChild(a);a.click();a.remove();
+}
+async function importa(e){
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{
+    const o=JSON.parse(await f.text());if(o.app!=='armas-adam')throw 0;
+    let n=0;const agora=Date.now();
+    COLS.forEach(c=>(o[c]||[]).forEach(d=>{if(!d||!d.id)return;S[c]=S[c].filter(x=>x.id!==d.id).concat({...d,upd:agora+n});n++}));
+    if(o.perfil)S.perfil={nivel:1,checks:{},...o.perfil,upd:agora};
+    persist();$('#cfg').hidden=true;render();toast(n+' itens importados');sync();
+  }catch(x){toast('Arquivo inválido')}
+}
+async function sair(){
+  const b=$('#cfOut');
+  if(!b.dataset.sure){b.dataset.sure=1;b.textContent='Toque de novo para sair';return}
+  b.disabled=true;b.textContent='Salvando…';
+  try{await sync()}catch(e){}
+  limpaLocal();
+  const L=await bAll();for(const o of L){if(SES&&o.u===SES.uid)await bDel(o.id)}
+  Object.keys(BU).forEach(k=>delete BU[k]);
+  COLS.forEach(c=>S[c]=[]);S.perfil={nivel:1,checks:{},};DEL={};
+  SES=null;saveSes();$('#cfg').hidden=true;V={scr:'home'};mostraLogin();
+}
+
+/* ---------- início ---------- */
+loadSes();
+$('#cfgBtn').onclick=abreCfg;
+document.querySelectorAll('.syncSt').forEach(b=>b.onclick=()=>sync());
+if(SES){carregaLocal();}
+mostraLogin();
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+
+</body></html>
