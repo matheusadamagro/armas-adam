@@ -74,6 +74,8 @@ body.lk{overflow:hidden}
 .chipst{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--on-steel);border-radius:99px;padding:5px 11px;font-size:12.5px;white-space:nowrap}
 .chipst[data-st="0"]{color:#f0c97a}.chipst[data-st="1"]{color:#8fe0b2}
 #cfg{z-index:25}
+.police{display:block;width:100%;text-align:left;margin:16px 0 4px;padding:15px 16px;border:0;border-radius:14px;background:linear-gradient(135deg,#d9b25e,#b88a2c);color:#14181c}.police b{display:block;font:700 22px/1.1 var(--disp);letter-spacing:.04em;text-transform:uppercase}.police span{font-size:14px}
+.pol .ax button.th{width:96px;height:96px}
 .hero .wrap{padding-top:calc(26px + env(safe-area-inset-top,0px))}header.top{padding-top:env(safe-area-inset-top,0px)}
 /* marca */
 .hero{background:linear-gradient(160deg,var(--steel2),var(--steel));color:var(--on-steel);border-bottom:3px solid var(--brass-hi)}
@@ -318,6 +320,7 @@ const ICON={
   regular:'<path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>'
 };
 ICON.habit=ICON.treinos;
+ICON.policia='<path d="M12 3l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.3 6.8 19l1-5.8L3.6 9.1l5.8-.8z"/>';
 const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
 
 /* ---------- estado ---------- */
@@ -336,7 +339,7 @@ const nivel=()=>NIV[S.perfil.nivel]||null;
 const TIPOS=['Pistola','Revólver','Carabina / Rifle','Espingarda','Outro'];
 const GRUPOS=['Arma curta raiada permitida','Arma curta raiada restrita','Arma curta lisa permitida','Arma curta lisa restrita','Arma longa raiada permitida','Arma longa raiada restrita','Arma longa lisa permitida','Arma longa lisa restrita'];
 const CATS=['Munição','Taxas e GRU','Clube','Acessórios','Manutenção','Outros'];
-const DOCT=['CR','Filiação a clube','Laudo psicológico','Capacidade técnica','Certidões negativas','Declaração de Segurança do Acervo','Outro'];
+const DOCT=['CR','Documento com foto (RG/CNH)','Filiação a clube','Laudo psicológico','Capacidade técnica','Certidões negativas','Declaração de Segurança do Acervo','Autorização de manejo (SIMAF/Ibama)','Certificado de Regularidade (CTF/Ibama)','Declaração de acesso à propriedade','Outro'];
 const FINS=['Treinamento','Competição','Caça / manejo','Manutenção','Mudança de endereço do acervo','Outra'];
 
 function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
@@ -471,6 +474,7 @@ function home(){
   const ano=hoje().slice(0,4),gAno=sum(S.gastos.filter(g=>(g.data||'').startsWith(ano)),g=>g.valor),cr=stCR(),ck=chkResumo();
   $('#homeBody').innerHTML=
   (A.length?`<div class="sec"><h2>Atenção</h2></div>`+A.map(x=>`<button class="al ${x.s.k}" data-act="${x.act}" data-id="${esc(x.id)}"><span class="bx"><b>${esc(x.nome)}</b><small>${esc(x.sub)}</small></span>${pill(x.s)}</button>`).join(''):'')+
+  `<button class="police" data-act="geral" data-id="policia"><b>Mostrar à polícia</b><span>CR, CRAF, guias e autorizações de manejo</span></button>`+
   `<div class="sec"><h2>Minhas armas</h2></div>`+
   (S.armas.length?S.armas.slice().sort((a,b)=>(a.criado||'').localeCompare(b.criado||'')).map(a=>{const h=habit(a);return `<button class="arma" data-act="arma" data-id="${esc(a.id)}">
     <span class="a-top"><span class="a-nm">${esc(a.nome)}</span><span class="a-cal">${esc(a.calibre||'')}</span></span>
@@ -610,10 +614,10 @@ function aTreinos(a){
 }
 
 function telaGeral(){
-  $('#tTit').textContent={docs:'Meu CR e documentos',habit:'Habitualidade',gastos:'Gastos',regular:'Regularização'}[V.tab];
+  $('#tTit').textContent={docs:'Meu CR e documentos',habit:'Habitualidade',gastos:'Gastos',regular:'Regularização',policia:'Abordagem policial'}[V.tab];
   $('#tSub').textContent='Geral · vale para todas as armas';
-  tabs([['docs','Documentos'],['habit','Habitualidade'],['gastos','Gastos'],['regular','Regularização']]);
-  $('#view').innerHTML=V.tab==='gastos'?gGastos():V.tab==='regular'?gRegular():V.tab==='habit'?gHabit():gDocs();
+  tabs([['docs','Documentos'],['habit','Habitualidade'],['gastos','Gastos'],['regular','Regularização'],['policia','Polícia']]);
+  $('#view').innerHTML=V.tab==='policia'?gPolicia():V.tab==='gastos'?gGastos():V.tab==='regular'?gRegular():V.tab==='habit'?gHabit():gDocs();
 }
 function docCard(d){
   const s=d.validade?st(d.validade,d.tipo==='CR'?60:30):{k:'none',t:'sem validade'};
@@ -1107,8 +1111,16 @@ function abreCfg(){
   $('#cfFile').onchange=importa;
   $('#cfOut').onclick=sair;
 }
-function exporta(){
-  const o={app:'armas-adam',v:1,perfil:S.perfil};COLS.forEach(c=>o[c]=S[c]);
+async function exporta(){
+  const o={app:'armas-adam',v:2,perfil:S.perfil,blobs:{}};COLS.forEach(c=>o[c]=S[c]);
+  try{
+    const L=(await bAll()).filter(x=>x.u===SES.uid&&x.blob);
+    for(const x of L){
+      const buf=new Uint8Array(await x.blob.arrayBuffer());let bin='';
+      for(let i=0;i<buf.length;i+=0x8000)bin+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));
+      o.blobs[x.id]={type:x.type,b64:btoa(bin)};
+    }
+  }catch(e){}
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));
   a.download='armas-adam-copia-'+hoje()+'.json';document.body.appendChild(a);a.click();a.remove();
 }
@@ -1119,6 +1131,10 @@ async function importa(e){
     let n=0;const agora=Date.now();
     COLS.forEach(c=>(o[c]||[]).forEach(d=>{if(!d||!d.id)return;S[c]=S[c].filter(x=>x.id!==d.id).concat({...d,upd:agora+n});n++}));
     if(o.perfil)S.perfil={nivel:1,checks:{},...o.perfil,upd:agora};
+    for(const[id,x]of Object.entries(o.blobs||{})){
+      const bin=atob(x.b64),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+      const bl=new Blob([u8],{type:x.type});await bPut({id,u:SES.uid,blob:bl,type:x.type,sent:false});BU[id]=URL.createObjectURL(bl);
+    }
     persist();$('#cfg').hidden=true;render();toast(n+' itens importados');sync();
   }catch(x){toast('Arquivo inválido')}
 }
@@ -1141,6 +1157,46 @@ document.querySelectorAll('.syncSt').forEach(b=>b.onclick=()=>sync());
 if(SES){carregaLocal();}
 mostraLogin();
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
+/* ---------- tela "Polícia": documentos para mostrar numa abordagem ---------- */
+function gPolicia(){
+  const ult=tp=>S.docs.filter(d=>d.tipo===tp).sort((a,b)=>(b.validade||'').localeCompare(a.validade||''))[0];
+  const warn={'CR':60,'Certificado de Regularidade (CTF/Ibama)':15,'Autorização de manejo (SIMAF/Ibama)':30};
+  const docBloco=(tp,rot,dica)=>{
+    const d=ult(tp);
+    if(!d)return `<div class="card pol"><div class="row"><div><div class="nm">${esc(rot)}</div><div class="sub">${esc(dica||'')}</div></div><span class="pill none">não cadastrado</span></div>
+      <div class="acts"><button class="btn o s" data-act="novoDoc" data-id="${esc(tp)}">+ Cadastrar</button></div></div>`;
+    const s=d.validade?st(d.validade,warn[tp]||30):{k:'ok',t:'cadastrado'};
+    return `<div class="card pol"><div class="row"><div><div class="nm">${esc(rot)}</div><div class="sub">${d.numero?'Nº <span class="mono">'+esc(d.numero)+'</span>':''}${d.titulo?(d.numero?' · ':'')+esc(d.titulo):''}</div></div>${pill(s)}</div>
+      ${anexos(d.anexos)||'<p class="note">Sem foto ou PDF. Edite o documento para anexar.</p>'}
+      <div class="acts"><button class="btn o s" data-act="edDoc" data-id="${esc(d.id)}">Editar</button></div></div>`;
+  };
+  const armaBloco=a=>{
+    const cf=stCRAF(a),h=hoje();
+    const g=guiasDe(a.id).filter(x=>!x.arq&&x.validade&&x.validade>=h).sort((x,y)=>x.validade.localeCompare(y.validade))[0];
+    const gs=g?st(g.validade,7):{k:'bad',t:'sem guia vigente'};
+    return `<div class="card pol"><div class="row"><div><div class="nm">${esc(a.nome)}</div><div class="sub">${esc([a.tipo,a.calibre].filter(Boolean).join(' · '))}${a.serie?' · série <span class="mono">'+esc(a.serie)+'</span>':''}</div></div></div>
+      <div class="sit" style="padding-bottom:4px"><span class="bx"><b>CRAF</b><small>${a.registro?'Registro <span class="mono">'+esc(a.registro)+'</span>':'sem nº de registro'}</small></span>${pill(cf)}</div>
+      ${anexos(a.anexos)}
+      <div class="sit"><span class="bx"><b>Guia de tráfego</b><small>${g?esc(g.finalidade||'')+(g.numero?' · nº '+esc(g.numero):'')+(g.destino?' · '+esc(g.destino):''):'Lance a guia na aba Guias da arma'}</small></span>${pill(gs)}</div>
+      ${g?anexos(g.anexos)||'<p class="note">Sem foto ou PDF da guia. Edite a guia para anexar.</p>':`<div class="acts"><button class="btn o s" data-act="armaTab" data-id="${esc(a.id)}|guias">Ir para as guias</button></div>`}</div>`;
+  };
+  return `<div class="go warn" style="margin-top:6px"><b>Se for abordado</b><span>Pare com calma, avise que é CAC e que a arma está desmuniciada e a munição separada. Mostre só os documentos abaixo.</span></div>
+  <div class="sec"><h2>Seus documentos</h2></div>
+  ${docBloco('Documento com foto (RG/CNH)','Documento com foto','RG ou CNH')}
+  ${docBloco('CR','Certificado de Registro (CR)','Emitido pela Polícia Federal')}
+  <div class="sec"><h2>Suas armas</h2></div>
+  ${S.armas.length?S.armas.map(armaBloco).join(''):'<div class="empty"><b>Nenhuma arma cadastrada</b>Cadastre a arma para mostrar o CRAF e a guia aqui.</div>'}
+  <div class="sec"><h2>Se estiver indo caçar ou manejar</h2></div>
+  ${docBloco('Autorização de manejo (SIMAF/Ibama)','Autorização de manejo de espécies invasoras','Controle de javali e outras espécies exóticas invasoras. Vale por propriedade, até 6 meses.')}
+  ${docBloco('Certificado de Regularidade (CTF/Ibama)','Certificado de Regularidade do Ibama','Emitido pelo Cadastro Técnico Federal. Vale cerca de 3 meses.')}
+  ${docBloco('Declaração de acesso à propriedade','Declaração de acesso à propriedade','Assinada pelo dono da área, com a lista de quem participa.')}
+  <div class="card"><b>Lembretes</b><ul class="fontes" style="margin-top:6px">
+   <li>Arma <b>desmuniciada</b> e munição em recipiente <b>separado</b> durante todo o trajeto.</li>
+   <li>A guia vale só para o <b>trajeto e a finalidade</b> que estão nela. A de caça fica limitada ao <b>município cadastrado no SIMAF</b>.</li>
+   <li>Leve também um <b>comprovante da finalidade</b>: inscrição na prova, calendário do clube ou autorização do dono da área.</li>
+   <li>Este resumo foi feito a partir de fontes de consultoria e da legislação (Decreto 11.615/2023, Lei 10.826/2003). Confirme sempre com a Polícia Federal e o Ibama.</li></ul></div>`;
+}
 </script>
 
 </body></html>
