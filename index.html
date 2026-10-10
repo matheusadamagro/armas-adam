@@ -177,6 +177,12 @@ dl.dados dd{margin:1px 0 0;font-weight:500;overflow-wrap:anywhere}
 .ax{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .ax button.th{width:64px;height:64px;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--soft)}
 .ax button.th img{width:100%;height:100%;object-fit:cover;display:block}
+.ax button.pdf{font:inherit;text-align:left;cursor:pointer}
+#pv{position:fixed;inset:0;z-index:40;background:#111;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+#pv .pb{display:flex;gap:10px;padding:10px 12px;align-items:center}
+#pv .pb span{flex:1;color:#fff;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pv .pb button{background:#fff;color:#111;border:0;border-radius:10px;padding:10px 16px;font-weight:600}
+#pv iframe{flex:1;border:0;background:#fff;width:100%}
 .ax a.pdf,.ax span.pdf{display:inline-flex;align-items:center;min-height:64px;max-width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;text-decoration:none;color:var(--ink);background:var(--soft);overflow-wrap:anywhere}
 .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .item{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
@@ -284,6 +290,7 @@ select.sel{width:100%;padding:11px;border-radius:10px;border:1px solid var(--lin
 </div>
 
 <div class="sheet" id="sheet" hidden><div class="p" id="form"></div></div>
+<div id="pv" hidden><div class="pb"><span></span><button data-act="pvShare">Compartilhar</button><button data-act="pvClose">Fechar</button></div><iframe title="PDF"></iframe></div>
 <div id="lb" hidden><img alt="Anexo ampliado"><button data-act="lbClose">Fechar</button></div>
 <div id="toast" hidden></div>
 <input type="file" id="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden>
@@ -494,7 +501,7 @@ function home(){
 function tabs(L){$('#tabs').innerHTML=L.map(([k,l])=>`<button data-act="tab" data-id="${k}" class="${V.tab===k?'on':''}">${ic(k)}${l}</button>`).join('')}
 function anexos(L){
   if(!L||!L.length)return'';
-  return `<div class="ax">`+L.map(a=>/^image\//.test(a.tipo||'')?`<button class="th" data-act="ver" data-id="${esc(a.id)}" title="${esc(a.nome)}"><img src="${blob(a.id)}" alt="${esc(a.nome)}" loading="lazy"></button>`:`<a class="pdf" href="${blob(a.id)}" target="_blank" rel="noopener">PDF · ${esc(a.nome)}</a>`).join('')+`</div>`;
+  return `<div class="ax">`+L.map(a=>/^image\//.test(a.tipo||'')?`<button class="th" data-act="ver" data-id="${esc(a.id)}" title="${esc(a.nome)}"><img src="${blob(a.id)}" alt="${esc(a.nome)}" loading="lazy"></button>`:`<button class="pdf" data-act="verpdf" data-id="${esc(a.id)}" data-nome="${esc(a.nome)}">PDF · ${esc(a.nome)}</button>`).join('')+`</div>`;
 }
 
 function telaArma(a){
@@ -810,6 +817,9 @@ const ACT={
   novoTreino:()=>openForm(fTreino()),
   edTreino:b=>openForm(fTreino(S.treinos.find(t=>t.id===b.dataset.id))),
   ver:b=>{$('#lb img').src=blob(b.dataset.id);$('#lb').hidden=false},
+  verpdf:async b=>{const id=b.dataset.id,u=blobUrl(id);if(!u)return;window._pv={id,nome:b.dataset.nome||'documento.pdf',u};$('#pv span').textContent=window._pv.nome;$('#pv iframe').src=u;$('#pv').hidden=false},
+  pvClose:()=>{$('#pv').hidden=true;$('#pv iframe').removeAttribute('src')},
+  pvShare:async()=>{const p=window._pv;if(!p)return;try{const bl=await (await fetch(p.u)).blob();const f=new File([bl],/\.pdf$/i.test(p.nome)?p.nome:p.nome+'.pdf',{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:p.nome});else{const a=document.createElement('a');a.href=p.u;a.download=f.name;document.body.appendChild(a);a.click();a.remove()}}catch(e){}},
   lbClose:()=>{$('#lb').hidden=true;$('#lb img').removeAttribute('src')},
   chk:b=>{const c={...(S.perfil.checks||{})};c[b.dataset.id]=!c[b.dataset.id];putPerfil({...S.perfil,checks:c});render()},
   fAno:b=>{G.ano=b.dataset.id;render()},fCat:b=>{G.cat=b.dataset.id;render()},fArma:b=>{G.arma=b.dataset.id;render()},
