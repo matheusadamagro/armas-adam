@@ -136,14 +136,16 @@ body.lk{overflow:hidden}
 .al small{display:block;color:var(--mut);font-size:13px}
 
 /* app */
-#app{padding-bottom:92px}
-header.top{position:sticky;top:0;z-index:5;background:var(--steel);color:var(--on-steel);border-bottom:2px solid var(--brass-hi)}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);padding-bottom:0}
+#app[hidden]{display:none}
+#app>#view{flex:1 1 auto;min-height:0;width:100%;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding-bottom:28px}
+header.top{position:relative;flex:none;z-index:5;background:var(--steel);color:var(--on-steel);border-bottom:2px solid var(--brass-hi)}
 header.top .in{display:flex;align-items:center;gap:10px;padding:10px 16px;max-width:720px;margin:0 auto}
 header.top .back{background:transparent;border:1px solid rgba(255,255,255,.22);color:var(--on-steel);border-radius:9px;padding:6px 11px;font-size:14px;white-space:nowrap}
 header.top .t{flex:1;min-width:0;line-height:1.15}
 header.top .t b{display:block;font:700 21px/1.1 var(--disp);letter-spacing:.03em;text-transform:uppercase;overflow-wrap:anywhere}
 header.top .t span{font-size:13px;color:var(--steel-mut)}
-nav.tabs{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);z-index:6;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs{position:relative;flex:none;background:var(--card);border-top:1px solid var(--line);z-index:6;padding-bottom:env(safe-area-inset-bottom,0px)}
 nav.tabs .in{display:flex;max-width:720px;margin:0 auto}
 nav.tabs button{flex:1;min-width:0;background:none;border:0;padding:9px 2px 8px;color:var(--mut);font-size:11.5px;display:flex;flex-direction:column;align-items:center;gap:3px}
 nav.tabs svg{width:22px;height:22px}
@@ -771,7 +773,7 @@ const fArma=(a)=>({col:'armas',title:a?'Editar arma':'Nova arma',novo:!a,data:a|
   {k:'sistema',l:'Sistema',type:'select',opts:['Sinarm-CAC (PF)','Sigma (Exército)','Sinarm (PF)'],half:1},{k:'registro',l:'Nº do registro',half:1},
   {k:'crafEmissao',l:'Emissão do CRAF',type:'date',half:1},{k:'crafValidade',l:'Validade do CRAF',type:'date',half:1},
   {k:'obs',l:'Observações',type:'area'}],
-  after:o=>{if(!a){V={scr:'arma',arma:o.id,tab:'registro'};render();window.scrollTo(0,0)}}});
+  after:o=>{if(!a){V={scr:'arma',arma:o.id,tab:'registro'};render();toTop()}}});
 const fGuia=(g)=>({col:'guias',title:g?'Editar guia':'Nova guia de tráfego',novo:!g,data:g||{arma:V.arma,finalidade:'Treinamento',emissao:hoje()},fields:[
   {k:'finalidade',l:'Finalidade',type:'select',opts:FINS,blank:false,half:1},{k:'numero',l:'Nº da guia',half:1},
   {k:'destino',l:'Destino ou trajeto',ph:'Ex.: Clube de tiro em Rio Verde'},
@@ -801,7 +803,7 @@ const fTreino=(t)=>({col:'treinos',title:t?'Editar registro':'Registrar treino o
   {k:'obs',l:'Observações',type:'area'}]});
 
 /* ---------- ações ---------- */
-function go(v){V=v;render();window.scrollTo(0,0)}
+function go(v){V=v;render();toTop()}
 const ACT={
   home:()=>go({scr:'home'}),
   arma:b=>go({scr:'arma',arma:b.dataset.id,tab:'resumo'}),
@@ -1115,7 +1117,7 @@ function abreCfg(){
    <h3>Segurança</h3>
    ${ok?`<button class="btn o" id="cfFace" style="width:100%;margin-top:6px">${face?'Desativar Face ID':'Ativar Face ID'}</button><div class="hint">Com o Face ID ligado, o app pede o seu rosto sempre que abrir.</div>`:'<div class="hint">Este aparelho não oferece Face ID para o app.</div>'}
    <h3>Sincronização</h3>
-   <div class="hint">Versão do app: 11/10 11:23</div>
+   <div class="hint">Versão do app: 11/10 11:33</div>
    <div class="hint" id="cfLast"></div>
    <div class="hint" id="cfAnx"></div>
    <button class="btn o" id="cfSync" style="width:100%;margin-top:8px">Sincronizar agora</button>
@@ -1374,6 +1376,8 @@ async function autoLer(file){
   drawForm();
   toast(feitos.length?'Li o PDF e preenchi: '+feitos.join(', ')+'. Confira antes de salvar.':'Li o PDF, mas não achei dados para preencher.');
 }
+
+function toTop(){try{const v=document.getElementById('view');if(v)v.scrollTop=0;window.scrollTo(0,0)}catch(e){}}
 </script>
 
 </body></html>
