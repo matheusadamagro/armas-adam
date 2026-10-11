@@ -817,7 +817,7 @@ const ACT={
   novoTreino:()=>openForm(fTreino()),
   edTreino:b=>openForm(fTreino(S.treinos.find(t=>t.id===b.dataset.id))),
   ver:b=>{$('#lb img').src=blob(b.dataset.id);$('#lb').hidden=false},
-  verpdf:async b=>{const id=b.dataset.id,u=blobUrl(id);if(!u)return;window._pv={id,nome:b.dataset.nome||'documento.pdf',u};$('#pv span').textContent=window._pv.nome;$('#pv iframe').src=u;$('#pv').hidden=false},
+  verpdf:async b=>{const id=b.dataset.id,u=blobUrl(id);if(!u){toast('Anexo ainda não chegou neste aparelho. Baixando…');try{await sync()}catch(e){}if(!blobUrl(id))toast('Não baixou. Veja o erro em ⚙ Ajustes.');return}window._pv={id,nome:b.dataset.nome||'documento.pdf',u};$('#pv span').textContent=window._pv.nome;$('#pv iframe').src=u;$('#pv').hidden=false},
   pvClose:()=>{$('#pv').hidden=true;$('#pv iframe').removeAttribute('src')},
   pvShare:async()=>{const p=window._pv;if(!p)return;try{const bl=await (await fetch(p.u)).blob();const f=new File([bl],/\.pdf$/i.test(p.nome)?p.nome:p.nome+'.pdf',{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:p.nome});else{const a=document.createElement('a');a.href=p.u;a.download=f.name;document.body.appendChild(a);a.click();a.remove()}}catch(e){}},
   lbClose:()=>{$('#lb').hidden=true;$('#lb img').removeAttribute('src')},
@@ -989,22 +989,31 @@ async function sync(){
     stat(e&&e.message==='expirou'?'Entre de novo':'Sem conexão · salvo no aparelho','0');
   }finally{SYNCING=false}
 }
+const ANX={err:'',up:0,pend:0,falta:0,tem:0};
 async function sincAnexos(){
+  ANX.err='';
   const L=await bAll(),mine=L.filter(o=>o.u===SES.uid),have=new Set(mine.map(o=>o.id));
+  ANX.tem=mine.filter(o=>o.blob).length;
   for(const o of mine){
     if(o.sent||!o.blob)continue;
-    const r=await fetch(SB_URL+'/storage/v1/object/anexos/'+bKey(o.id),{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SES.at,'x-upsert':'true','Content-Type':o.type},body:o.blob});
-    if(r.ok){o.sent=true;await bPut(o)}
+    try{
+      const r=await fetch(SB_URL+'/storage/v1/object/anexos/'+bKey(o.id),{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SES.at,'x-upsert':'true','Content-Type':o.type||'application/octet-stream'},body:o.blob});
+      if(r.ok){o.sent=true;await bPut(o)}else{ANX.err='envio '+r.status+' '+(await r.text()).slice(0,140)}
+    }catch(e){ANX.err='envio: '+e.message}
   }
   const want=[];COLS.forEach(c=>S[c].forEach(d=>(d.anexos||[]).forEach(a=>{if(!have.has(a.id))want.push(a)})));
   let novo=false;
   for(const a of want){
     try{
       const r=await fetch(SB_URL+'/storage/v1/object/authenticated/anexos/'+bKey(a.id),{headers:{apikey:SB_KEY,Authorization:'Bearer '+SES.at}});
-      if(!r.ok)continue;const b=await r.blob();
+      if(!r.ok){if(!ANX.err)ANX.err='download '+r.status+' '+(await r.text()).slice(0,140);continue}
+      const b=await r.blob();
       await bPut({id:a.id,u:SES.uid,blob:b,type:a.tipo||b.type,sent:true});BU[a.id]=URL.createObjectURL(b);novo=true;
-    }catch(e){}
+    }catch(e){if(!ANX.err)ANX.err='download: '+e.message}
   }
+  const L2=(await bAll()).filter(o=>o.u===SES.uid);
+  ANX.tem=L2.filter(o=>o.blob).length;ANX.pend=L2.filter(o=>o.blob&&!o.sent).length;
+  const h=new Set(L2.map(o=>o.id));ANX.falta=0;COLS.forEach(c=>S[c].forEach(d=>(d.anexos||[]).forEach(a=>{if(!h.has(a.id))ANX.falta++})));
   if(novo&&!sheetOpen())render();
 }
 window.addEventListener('online',()=>sync());
@@ -1102,6 +1111,7 @@ function abreCfg(){
    ${ok?`<button class="btn o" id="cfFace" style="width:100%;margin-top:6px">${face?'Desativar Face ID':'Ativar Face ID'}</button><div class="hint">Com o Face ID ligado, o app pede o seu rosto sempre que abrir.</div>`:'<div class="hint">Este aparelho não oferece Face ID para o app.</div>'}
    <h3>Sincronização</h3>
    <div class="hint" id="cfLast"></div>
+   <div class="hint" id="cfAnx"></div>
    <button class="btn o" id="cfSync" style="width:100%;margin-top:8px">Sincronizar agora</button>
    <h3>Cópia dos dados</h3>
    <button class="btn o" id="cfExp" style="width:100%;margin-top:6px">Baixar cópia (arquivo)</button>
@@ -1112,6 +1122,7 @@ function abreCfg(){
    <div class="hint">Os dados continuam salvos na nuvem. Ao sair, o aparelho apaga a cópia local.</div>
    <div class="fa"><button class="btn o" id="cfClose">Fechar</button></div>`;
   const l=+LSg(K('armas_last'));$('#cfLast').textContent=l?'Última sincronização: '+new Date(l).toLocaleString('pt-BR'):'Ainda não sincronizou neste aparelho.';
+  $('#cfAnx').textContent='Anexos neste aparelho: '+ANX.tem+' · faltando baixar: '+ANX.falta+' · pendentes de envio: '+ANX.pend+(ANX.err?' · ERRO: '+ANX.err:'');
   $('#cfg').hidden=false;
   $('#cfClose').onclick=()=>$('#cfg').hidden=true;
   $('#cfSync').onclick=async()=>{await sync();abreCfg()};
