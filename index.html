@@ -184,6 +184,8 @@ dl.dados dd{margin:1px 0 0;font-weight:500;overflow-wrap:anywhere}
 #pv .pb button{background:#fff;color:#111;border:0;border-radius:10px;padding:10px 16px;font-weight:600}
 #pv iframe{flex:1;border:0;background:#fff;width:100%}
 .ax a.pdf,.ax span.pdf{display:inline-flex;align-items:center;min-height:64px;max-width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;text-decoration:none;color:var(--ink);background:var(--soft);overflow-wrap:anywhere}
+.two>div{min-width:0}
+#form input[type=date]{min-width:0;width:100%;max-width:100%;box-sizing:border-box;-webkit-appearance:none;appearance:none;min-height:46px;text-align:left}
 .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .item{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
 .item .v{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -1113,7 +1115,7 @@ function abreCfg(){
    <h3>Segurança</h3>
    ${ok?`<button class="btn o" id="cfFace" style="width:100%;margin-top:6px">${face?'Desativar Face ID':'Ativar Face ID'}</button><div class="hint">Com o Face ID ligado, o app pede o seu rosto sempre que abrir.</div>`:'<div class="hint">Este aparelho não oferece Face ID para o app.</div>'}
    <h3>Sincronização</h3>
-   <div class="hint">Versão do app: 11/10 11:08</div>
+   <div class="hint">Versão do app: 11/10 11:12</div>
    <div class="hint" id="cfLast"></div>
    <div class="hint" id="cfAnx"></div>
    <button class="btn o" id="cfSync" style="width:100%;margin-top:8px">Sincronizar agora</button>
@@ -1310,7 +1312,7 @@ function extrairPdf(L){
 }
 async function autoLer(file){
   let L;
-  try{toast('Lendo o PDF…');L=await pdfLinhas(file)}catch(e){toast('Não consegui ler este PDF (precisa de internet na primeira vez).');return}
+  try{toast('Lendo o PDF…');L=await pdfLinhas(file)}catch(e){toast('Não consegui ler este PDF: '+String((e&&e.message)||e).slice(0,90));return}
   if(!F)return;
   if(L.join('').length<30){toast('Este PDF é uma imagem, não consigo ler o texto. Preencha à mão.');return}
   const {kind,V}=extrairPdf(L);
