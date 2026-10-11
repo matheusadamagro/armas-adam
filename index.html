@@ -818,6 +818,7 @@ const ACT={
   edTreino:b=>openForm(fTreino(S.treinos.find(t=>t.id===b.dataset.id))),
   ver:b=>{$('#lb img').src=blob(b.dataset.id);$('#lb').hidden=false},
   verpdf:async b=>{const id=b.dataset.id,u=blobUrl(id);if(!u){toast('Anexo ainda não chegou neste aparelho. Baixando…');try{await sync()}catch(e){}if(!blobUrl(id))toast('Não baixou. Veja o erro em ⚙ Ajustes.');return}window._pv={id,nome:b.dataset.nome||'documento.pdf',u};$('#pv span').textContent=window._pv.nome;$('#pv iframe').src=u;$('#pv').hidden=false},
+  novaGuiaArma:bt=>{V.arma=bt.dataset.id;openForm(fGuia())},
   pvClose:()=>{$('#pv').hidden=true;$('#pv iframe').removeAttribute('src')},
   pvShare:async()=>{const p=window._pv;if(!p)return;try{const bl=await (await fetch(p.u)).blob();const f=new File([bl],/\.pdf$/i.test(p.nome)?p.nome:p.nome+'.pdf',{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:p.nome});else{const a=document.createElement('a');a.href=p.u;a.download=f.name;document.body.appendChild(a);a.click();a.remove()}}catch(e){}},
   lbClose:()=>{$('#lb').hidden=true;$('#lb img').removeAttribute('src')},
@@ -1200,7 +1201,7 @@ function gPolicia(){
       <div class="sit" style="padding-bottom:4px"><span class="bx"><b>CRAF</b><small>${a.registro?'Registro <span class="mono">'+esc(a.registro)+'</span>':'sem nº de registro'}</small></span>${pill(cf)}</div>
       ${anexos(a.anexos)}
       <div class="sit"><span class="bx"><b>Guia de tráfego</b><small>${g?esc(g.finalidade||'')+(g.numero?' · nº '+esc(g.numero):'')+(g.destino?' · '+esc(g.destino):''):'Lance a guia na aba Guias da arma'}</small></span>${pill(gs)}</div>
-      ${g?anexos(g.anexos)||'<p class="note">Sem foto ou PDF da guia. Edite a guia para anexar.</p>':`<div class="acts"><button class="btn o s" data-act="armaTab" data-id="${esc(a.id)}|guias">Ir para as guias</button></div>`}</div>`;
+      ${g?(anexos(g.anexos)||'<p class="note">Sem foto ou PDF da guia. Edite a guia para anexar.</p>')+`<div class="acts"><button class="btn o s" data-act="edGuia" data-id="${esc(g.id)}">Editar guia</button><button class="btn o s" data-act="novaGuiaArma" data-id="${esc(a.id)}">+ Nova guia</button></div>`:`<div class="acts"><button class="btn s" data-act="novaGuiaArma" data-id="${esc(a.id)}">+ Adicionar guia</button><button class="btn o s" data-act="armaTab" data-id="${esc(a.id)}|guias">Ver guias</button></div>`}</div>`;
   };
   return `<div class="go warn" style="margin-top:6px"><b>Se for abordado</b><span>Pare com calma, avise que é CAC e que a arma está desmuniciada e a munição separada. Mostre só os documentos abaixo.</span></div>
   <div class="sec"><h2>Seus documentos</h2></div>
