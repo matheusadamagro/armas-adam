@@ -1115,7 +1115,7 @@ function abreCfg(){
    <h3>Segurança</h3>
    ${ok?`<button class="btn o" id="cfFace" style="width:100%;margin-top:6px">${face?'Desativar Face ID':'Ativar Face ID'}</button><div class="hint">Com o Face ID ligado, o app pede o seu rosto sempre que abrir.</div>`:'<div class="hint">Este aparelho não oferece Face ID para o app.</div>'}
    <h3>Sincronização</h3>
-   <div class="hint">Versão do app: 11/10 11:17</div>
+   <div class="hint">Versão do app: 11/10 11:23</div>
    <div class="hint" id="cfLast"></div>
    <div class="hint" id="cfAnx"></div>
    <button class="btn o" id="cfSync" style="width:100%;margin-top:8px">Sincronizar agora</button>
@@ -1273,8 +1273,35 @@ function extrairPdf(L){
   const g=(...ks)=>{for(const k of ks)if(P[k])return P[k];return ''};
   const cap=s=>String(s||'').toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());
   const dinheiro=s=>{const a=String(s||'').match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);return a?a[a.length-1].replace(/\./g,''):''};
+  const perto=(re)=>{const m=new RegExp('(?:'+re+')[^\\d]{0,60}?(\\d{2}/\\d{2}/\\d{4})','i').exec(T1);return m?d(m[1]):''};
+  const EMI='emitid[oa] em|data d[aeo] emiss[ãa]o|data d[aeo] expedi[çc][ãa]o|data d[aeo] solicita[çc][ãa]o|solicitad[oa] em|data d[oae] pedido|data d[ae] protocolo|data d[ae] autoriza[çc][ãa]o|data d[ae] vistoria|data d[ae] realiza[çc][ãa]o|data do laudo|data d[ae] consulta|data d[ae] gera[çc][ãa]o|gerad[oa] em|data da emiss[ãa]o|emiss[ãa]o';
+  const VAL='v[aá]lid[oa] at[ée]|validade|data d[ae] validade|vence em|vencimento|prazo de validade|v[aá]lid[oa] por[^\\d]{0,20}at[ée]';
   let kind='';
-  if(/CERTIFICADO DE REGISTRO DE ARMA/i.test(T)||/\bCRAF\b/.test(T)){
+  if(/GUIA DE TR[AÁ]FEGO/i.test(T)&&/GTE|PORTE DE TR[AÂ]NSITO/i.test(T)){
+    kind='GUIA';
+    let m=/GTE\s*N[º°o]?\s*:?\s*(\d{8,})/i.exec(T1);V.numero=m?m[1]:'';
+    m=/Validade:\s*(\d{2}\/\d{2}\/\d{4})\s*(?:à|a|até|ate)\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);
+    if(m){V.emissao=d(m[1]);V.validade=d(m[2])}
+    if(!V.emissao){m=/GTE[^\n]*?\bde\s+(\d{2}\/\d{2}\/\d{4})/i.exec(T1);if(m)V.emissao=d(m[1])}
+    m=/LOCAL DE DESTINO[\s\S]*?Endere[çc]o e CEP:\s*([\s\S]+?)(?:P[áa]is\s*\/|4\.\s*FINALIDADE)/i.exec(T.replace(/\t/g,' '));
+    if(m)V.destino=m[1].replace(/\s+/g,' ').replace(/\bXXX\b,?\s*/g,'').replace(/[,\s]+$/,'').replace(/,\s*,/g,',').trim();
+    m=/4\.\s*FINALIDADE\s*([^\n]+)/i.exec(T);const fin=m?m[1]:T1;
+    V.finalidade=/treinamento|treino/i.test(fin)?'Treinamento':/competi/i.test(fin)?'Competição':/ca[cç]a|manejo/i.test(fin)?'Caça / manejo':'';
+  }else if(/CERTIFICADO DE REGULARIDADE/i.test(T)&&/CADASTROS? T[ÉE]CNICOS? FEDERAIS/i.test(T)&&!/Autoriza[çc][ãa]o de Controle/i.test(T)){
+    kind='CTF';
+    let m=/(\d{5,9})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})/.exec(T1.replace(/\t/g,' '));
+    if(m){V.numero=m[1];V.emissao=d(m[3]);V.validade=d(m[4])}
+    m=/C[óo]digo\s+Descri[çc][ãa]o\s*\n?\s*\d{2}-\d{2}\s+([^\n]+)/i.exec(T.replace(/\t/g,' '));V.titulo='CTF/APP'+(m?' · '+m[1].replace(/\s*-\s*Resolu[^\n]*$/i,'').trim():'');
+  }else if(/Autoriza[çc][ãa]o de Controle de Esp[ée]cies Ex[óo]ticas Invasoras/i.test(T)){
+    kind='IBAMA';
+    let m=/N[úu]mero:\s*([A-Za-z0-9\-\.\/]+)/i.exec(T1);V.numero=m?m[1]:'';
+    m=/Data da autoriza[çc][ãa]o:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);V.emissao=m?d(m[1]):perto(EMI);
+    m=/Fim:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);V.validade=m?d(m[1]):perto(VAL);
+    const sp=/Esp[ée]cie:\s*([^\t\n]+?)(?:\s{2,}|\t|\n|Tipo)/i.exec(T.replace(/\t/g,'  '));
+    V.titulo='Controle de espécie invasora'+(sp?': '+sp[1].trim():'');
+    const ini=/In[íi]cio:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1),fim=/Fim:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);
+    V.obs=ini&&fim?'Período: '+ini[1]+' a '+fim[1]+'.':'';
+  }else if(/CERTIFICADO DE REGISTRO DE ARMA/i.test(T)||(/\bCRAF\b/.test(T)&&/N[º°o]?\s*SIGMA|SISFPC/i.test(T))){
     kind='CRAF';
     V.crafValidade=d(g('VALIDADE','DATA DE VALIDADE'));V.crafEmissao=d(g('DATA DE EXPEDICAO','DATA DE EMISSAO','EMISSAO'));
     V.registro=(g('N SIGMA','N SINARM','N DO REGISTRO','NUMERO DO REGISTRO','REGISTRO')||'').replace(/[^\dA-Za-z\-\.\/]/g,'');
@@ -1285,8 +1312,8 @@ function extrairPdf(L){
     kind='GUIA';
     V.numero=g('NUMERO DA GUIA','N DA GUIA','N GUIA','NUMERO');
     if(!V.numero){const m=/\b(\d{10,16})\b/.exec(T);if(m)V.numero=m[1]}
-    V.emissao=d(g('DATA DE EMISSAO','DATA DA EMISSAO','EMISSAO'));
-    V.validade=d(g('VALIDADE','DATA DE VALIDADE','VALIDADE DA GUIA','VALIDA ATE','VALIDO ATE'));
+    V.emissao=d(g('DATA DE EMISSAO','DATA DA EMISSAO','EMISSAO','DATA DA SOLICITACAO','DATA DE SOLICITACAO'))||perto(EMI);
+    V.validade=d(g('VALIDADE','DATA DE VALIDADE','VALIDADE DA GUIA','VALIDA ATE','VALIDO ATE'))||perto(VAL);
     if(!V.validade){const m=/v[aá]lid[ao]\s*(?:at[ée])?[:\s]*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);if(m)V.validade=d(m[1])}
     V.destino=g('DESTINO','TRAJETO','LOCAL DE DESTINO','ENDERECO DE DESTINO','LOCAL');
     V.finalidade=/competi/i.test(T)?'Competição':/ca[cç]a|manejo/i.test(T)?'Caça / manejo':/treinamento|treino/i.test(T)?'Treinamento':'';
@@ -1305,10 +1332,11 @@ function extrairPdf(L){
     const n=/Autoriza[çc][ãa]o N[º°o]:?\s*(\d{6,})/i.exec(T1),e=/Data de Emiss[ãa]o:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1),v=/Data de Validade:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);
     V.obs='Autorização de aquisição'+(n?' nº '+n[1]:'')+(e?', emitida em '+e[1]:'')+(v?', válida até '+v[1]:'')+'.';
   }else{
-    V.numero=g('N DO CR','NUMERO DO CR','CR','NUMERO','N DO REGISTRO','NUMERO DA AUTORIZACAO','N DA AUTORIZACAO','NUMERO DO CERTIFICADO','N DO CERTIFICADO','NUMERO DO DOCUMENTO');
+    V.numero=g('N DO CR','NUMERO DO CR','CR','NUMERO','N DO REGISTRO','NUMERO DA AUTORIZACAO','N DA AUTORIZACAO','NUMERO DO CERTIFICADO','N DO CERTIFICADO','NUMERO DO DOCUMENTO','NUMERO DO CERTIFICADO DE REGULARIDADE','N DO CERTIFICADO DE REGULARIDADE','CODIGO DO CERTIFICADO','NUMERO DO CTF','N DO CTF','CODIGO DE VALIDACAO');
     if(!V.numero){const m=/(?:N[º°o]|N[úu]mero)(?: da| do)?\s*(?:autoriza[çc][ãa]o|certificado|documento|registro)?\s*[:\-]?\s*(\d[\d\.\/\-]{4,})/i.exec(T1);if(m)V.numero=m[1]}
-    V.emissao=d(g('DATA DE EMISSAO','DATA DE EXPEDICAO','EMISSAO'));
-    V.validade=d(g('VALIDADE','DATA DE VALIDADE','VALIDO ATE','VALIDADE DO CR'));
+    V.emissao=d(g('DATA DE EMISSAO','DATA DE EXPEDICAO','EMISSAO','DATA DA SOLICITACAO','DATA DE SOLICITACAO','DATA DO PEDIDO','EMITIDO EM','SOLICITADO EM'))||perto(EMI);
+    V.validade=d(g('VALIDADE','DATA DE VALIDADE','VALIDO ATE','VALIDADE DO CR','VENCIMENTO'))||perto(VAL);
+    if(!V.emissao){const ds=T1.match(/\d{2}\/\d{2}\/\d{4}/g)||[];if(ds.length&&(!V.validade||d(ds[0])!==V.validade))V.emissaoAprox=d(ds[0])}
     if(!V.validade){const m=/v[aá]lid[ao]\s*(?:at[ée])?[:\s]*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);if(m)V.validade=d(m[1])}
   }
   return {kind,V};
@@ -1328,7 +1356,7 @@ async function autoLer(file){
   }else if(F.col==='guias'){
     if(kind==='GUIA'||kind==='')Object.assign(alvo,{numero:V.numero,emissao:V.emissao,validade:V.validade,destino:V.destino,finalidade:V.finalidade});
   }else if(F.col==='docs'){
-    if(kind===''||kind==='GUIA')Object.assign(alvo,{numero:V.numero,emissao:V.emissao,validade:V.validade});
+    if(kind===''||kind==='GUIA'||kind==='CTF'||kind==='IBAMA')Object.assign(alvo,{numero:V.numero,emissao:V.emissao,validade:V.validade,titulo:V.titulo,obs:V.obs});
   }else if(F.col==='gastos'){
     if(kind==='NF')Object.assign(alvo,{data:V.data,valor:V.valor,loja:V.loja,descricao:V.descricao});
   }
