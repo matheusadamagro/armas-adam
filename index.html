@@ -717,7 +717,7 @@ function drawForm(){
     if(f.half&&fs[i+1]&&fs[i+1].half){h+=`<div class="two">${fieldHtml(f)}${fieldHtml(fs[i+1])}</div>`;i++}
     else h+=fieldHtml(f);}
   if(F.anexos!==false){
-    h+=`<h3>Anexos</h3>`+F.ax.map((a,i)=>`<div class="axe"><span>${/^image\//.test(a.tipo||'')?'Foto':'PDF'} · ${esc(a.nome)}</span><button class="btn o s" data-act="fRm" data-id="${i}">Remover</button></div>`).join('')+
+    h+=`<h3>Anexos</h3>`+F.ax.map((a,i)=>`<div class="axe"><span>${/^image\//.test(a.tipo||'')?'Foto':'PDF'} · ${esc(a.nome)}</span>${/pdf/i.test(a.tipo||"")?`<button class="btn o s" data-act="fLer" data-id="${i}">Ler dados</button>`:""}<button class="btn o s" data-act="fRm" data-id="${i}">Remover</button></div>`).join('')+
       (assets?`<button class="btn o" data-act="fAdd" style="margin-top:10px">${F.busy?'Enviando…':'+ Foto ou PDF'}</button><div class="hint">JPG, PNG ou PDF, até 20 MB.</div>`:`<div class="hint" style="margin-top:8px">Anexos não estão disponíveis nesta tela.</div>`);
   }
   h+=`<div class="fa">${F.novo?'':'<button class="btn d" data-act="fDel">Apagar</button>'}<button class="btn o" data-act="fCancel">Cancelar</button><button class="btn" data-act="fSave">Salvar</button></div>`;
@@ -819,6 +819,7 @@ const ACT={
   edTreino:b=>openForm(fTreino(S.treinos.find(t=>t.id===b.dataset.id))),
   ver:b=>{$('#lb img').src=blob(b.dataset.id);$('#lb').hidden=false},
   verpdf:async b=>{const id=b.dataset.id,u=blobUrl(id);if(!u){toast('Anexo ainda não chegou neste aparelho. Baixando…');try{await sync()}catch(e){}if(!blobUrl(id))toast('Não baixou. Veja o erro em ⚙ Ajustes.');return}window._pv={id,nome:b.dataset.nome||'documento.pdf',u};$('#pv span').textContent=window._pv.nome;$('#pv iframe').src=u;$('#pv').hidden=false},
+  fLer:async bt=>{const a=F&&F.ax[+bt.dataset.id];if(!a)return;const u=blobUrl(a.id);if(!u){toast('Esse PDF ainda não está neste aparelho.');return}try{const bl=await (await fetch(u)).blob();await autoLer(new File([bl],a.nome||'a.pdf',{type:'application/pdf'}))}catch(e){toast('Não consegui ler este PDF.')}},
   novaGuiaArma:bt=>{V.arma=bt.dataset.id;openForm(fGuia())},
   pvClose:()=>{$('#pv').hidden=true;$('#pv iframe').removeAttribute('src')},
   pvShare:async()=>{const p=window._pv;if(!p)return;try{const bl=await (await fetch(p.u)).blob();const f=new File([bl],/\.pdf$/i.test(p.nome)?p.nome:p.nome+'.pdf',{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:p.nome});else{const a=document.createElement('a');a.href=p.u;a.download=f.name;document.body.appendChild(a);a.click();a.remove()}}catch(e){}},
@@ -1112,7 +1113,7 @@ function abreCfg(){
    <h3>Segurança</h3>
    ${ok?`<button class="btn o" id="cfFace" style="width:100%;margin-top:6px">${face?'Desativar Face ID':'Ativar Face ID'}</button><div class="hint">Com o Face ID ligado, o app pede o seu rosto sempre que abrir.</div>`:'<div class="hint">Este aparelho não oferece Face ID para o app.</div>'}
    <h3>Sincronização</h3>
-   <div class="hint">Versão do app: 11/10 11:06</div>
+   <div class="hint">Versão do app: 11/10 11:08</div>
    <div class="hint" id="cfLast"></div>
    <div class="hint" id="cfAnx"></div>
    <button class="btn o" id="cfSync" style="width:100%;margin-top:8px">Sincronizar agora</button>
@@ -1299,7 +1300,8 @@ function extrairPdf(L){
     const n=/Autoriza[çc][ãa]o N[º°o]:?\s*(\d{6,})/i.exec(T1),e=/Data de Emiss[ãa]o:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1),v=/Data de Validade:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);
     V.obs='Autorização de aquisição'+(n?' nº '+n[1]:'')+(e?', emitida em '+e[1]:'')+(v?', válida até '+v[1]:'')+'.';
   }else{
-    V.numero=g('N DO CR','NUMERO DO CR','CR','NUMERO','N DO REGISTRO');
+    V.numero=g('N DO CR','NUMERO DO CR','CR','NUMERO','N DO REGISTRO','NUMERO DA AUTORIZACAO','N DA AUTORIZACAO','NUMERO DO CERTIFICADO','N DO CERTIFICADO','NUMERO DO DOCUMENTO');
+    if(!V.numero){const m=/(?:N[º°o]|N[úu]mero)(?: da| do)?\s*(?:autoriza[çc][ãa]o|certificado|documento|registro)?\s*[:\-]?\s*(\d[\d\.\/\-]{4,})/i.exec(T1);if(m)V.numero=m[1]}
     V.emissao=d(g('DATA DE EMISSAO','DATA DE EXPEDICAO','EMISSAO'));
     V.validade=d(g('VALIDADE','DATA DE VALIDADE','VALIDO ATE','VALIDADE DO CR'));
     if(!V.validade){const m=/v[aá]lid[ao]\s*(?:at[ée])?[:\s]*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);if(m)V.validade=d(m[1])}
