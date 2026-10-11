@@ -1115,7 +1115,7 @@ function abreCfg(){
    <h3>Segurança</h3>
    ${ok?`<button class="btn o" id="cfFace" style="width:100%;margin-top:6px">${face?'Desativar Face ID':'Ativar Face ID'}</button><div class="hint">Com o Face ID ligado, o app pede o seu rosto sempre que abrir.</div>`:'<div class="hint">Este aparelho não oferece Face ID para o app.</div>'}
    <h3>Sincronização</h3>
-   <div class="hint">Versão do app: 11/10 11:12</div>
+   <div class="hint">Versão do app: 11/10 11:17</div>
    <div class="hint" id="cfLast"></div>
    <div class="hint" id="cfAnx"></div>
    <button class="btn o" id="cfSync" style="width:100%;margin-top:8px">Sincronizar agora</button>
@@ -1228,12 +1228,15 @@ function gPolicia(){
 /* ---------- leitura de PDF (preenche o formulário sozinho) ---------- */
 let PDFJS=null;
 async function pdfLinhas(file){
+  if(typeof ReadableStream!=='undefined'&&!ReadableStream.prototype[Symbol.asyncIterator]){ReadableStream.prototype[Symbol.asyncIterator]=async function*(){const r=this.getReader();try{for(;;){const x=await r.read();if(x.done)return;yield x.value}}finally{r.releaseLock()}}}
   if(!PDFJS){PDFJS=await import('./pdfjs/pdf.min.mjs');PDFJS.GlobalWorkerOptions.workerSrc=new URL('./pdfjs/pdf.worker.min.mjs',location.href).href}
   const doc=await PDFJS.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
   const out=[];
   for(let p=1;p<=Math.min(doc.numPages,3);p++){
-    const tc=await (await doc.getPage(p)).getTextContent();const rows=[];
-    for(const it of tc.items){
+    const rd=(await doc.getPage(p)).streamTextContent().getReader(),todos=[];
+    for(;;){const {done,value}=await rd.read();if(done)break;todos.push(...value.items)}
+    const rows=[];
+    for(const it of todos){
       if(!it.str||!it.str.trim())continue;
       let r=rows.find(r=>Math.abs(r.y-it.transform[5])<3);
       if(!r){r={y:it.transform[5],its:[]};rows.push(r)}
