@@ -741,6 +741,7 @@ $('#file').addEventListener('change',async e=>{
   collect();F.busy=true;drawForm();
   try{const b=await shrink(file),r=await assets.upload(b,{type:b.type||file.type});
     if(F){const a={id:r.id,nome:file.name||'anexo',tipo:r.contentType};F.ax.push(a);F.novos.push(a)}
+    if(F&&/pdf/i.test(file.type||''))await autoLer(file);
   }catch(err){toast({too_large:'Arquivo grande demais (máximo 20 MB).',unsupported_type:'Formato não aceito. Use JPG, PNG ou PDF.',quota_or_state:'Espaço de anexos cheio. Remova algum anexo antigo.',rate_limited:'Muitos envios seguidos. Espere um pouco.'}[err&&err.code]||'Não foi possível enviar o anexo.')}
   if(F){F.busy=false;drawForm()}
 });
@@ -1218,6 +1219,124 @@ function gPolicia(){
    <li>A guia vale só para o <b>trajeto e a finalidade</b> que estão nela. A de caça fica limitada ao <b>município cadastrado no SIMAF</b>.</li>
    <li>Leve também um <b>comprovante da finalidade</b>: inscrição na prova, calendário do clube ou autorização do dono da área.</li>
    <li>Este resumo foi feito a partir de fontes de consultoria e da legislação (Decreto 11.615/2023, Lei 10.826/2003). Confirme sempre com a Polícia Federal e o Ibama.</li></ul></div>`;
+}
+
+/* ---------- leitura de PDF (preenche o formulário sozinho) ---------- */
+let PDFJS=null;
+async function pdfLinhas(file){
+  if(!PDFJS){PDFJS=await import('./pdfjs/pdf.min.mjs');PDFJS.GlobalWorkerOptions.workerSrc=new URL('./pdfjs/pdf.worker.min.mjs',location.href).href}
+  const doc=await PDFJS.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  const out=[];
+  for(let p=1;p<=Math.min(doc.numPages,3);p++){
+    const tc=await (await doc.getPage(p)).getTextContent();const rows=[];
+    for(const it of tc.items){
+      if(!it.str||!it.str.trim())continue;
+      let r=rows.find(r=>Math.abs(r.y-it.transform[5])<3);
+      if(!r){r={y:it.transform[5],its:[]};rows.push(r)}
+      r.its.push(it);
+    }
+    rows.sort((a,b)=>b.y-a.y);
+    for(const r of rows){
+      r.its.sort((a,b)=>a.transform[4]-b.transform[4]);
+      let s='',end=null;
+      for(const it of r.its){const x=it.transform[4];
+        if(end!=null){const gap=x-end;if(gap>6)s+='\t';else if(gap>1&&!/\s$/.test(s)&&!/^\s/.test(it.str))s+=' '}
+        s+=it.str;end=x+it.width}
+      out.push(s.replace(/ {2,}/g,' ').trim());
+    }
+  }
+  return out.filter(Boolean);
+}
+const nrmL=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[º°]/g,'').replace(/[:]+\s*$/,'').replace(/\s+/g,' ').trim();
+function paresPdf(L){
+  const m={};
+  L.forEach((ln,i)=>{
+    const re=/([A-Za-zÀ-ú\/\. º°\-]{3,40}):\s*([^\t:]+?)(?=\t|$)/g;let x;
+    while((x=re.exec(ln))){const k=nrmL(x[1]);if(k&&!m[k])m[k]=x[2].trim()}
+    const cols=ln.split('\t').map(c=>c.trim()).filter(Boolean);
+    const nx=(L[i+1]||'').split('\t').map(c=>c.trim()).filter(Boolean);
+    if(cols.length&&nx.length&&cols.every(c=>c.length<46&&!/\d{2}\/\d{2}\/\d{4}/.test(c)&&(c===c.toUpperCase()||/:$/.test(c)))){
+      cols.forEach((c,j)=>{const k=nrmL(c);if(k&&nx[j]&&!m[k])m[k]=nx[j]})}
+  });
+  return m;
+}
+function extrairPdf(L){
+  const T=L.join('\n'),T1=T.replace(/\s+/g,' '),P=paresPdf(L),V={};
+  const d=s=>{const m=/(\d{2})\/(\d{2})\/(\d{4})/.exec(s||'');return m?m[3]+'-'+m[2]+'-'+m[1]:''};
+  const g=(...ks)=>{for(const k of ks)if(P[k])return P[k];return ''};
+  const cap=s=>String(s||'').toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());
+  const dinheiro=s=>{const a=String(s||'').match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);return a?a[a.length-1].replace(/\./g,''):''};
+  let kind='';
+  if(/CERTIFICADO DE REGISTRO DE ARMA/i.test(T)||/\bCRAF\b/.test(T)){
+    kind='CRAF';
+    V.crafValidade=d(g('VALIDADE','DATA DE VALIDADE'));V.crafEmissao=d(g('DATA DE EXPEDICAO','DATA DE EMISSAO','EMISSAO'));
+    V.registro=(g('N SIGMA','N SINARM','N DO REGISTRO','NUMERO DO REGISTRO','REGISTRO')||'').replace(/[^\dA-Za-z\-\.\/]/g,'');
+    if(!/^\d/.test(V.registro))V.registro='';
+    V.serie=g('N SERIE','NUMERO DE SERIE','SERIE');V.marca=cap(g('MARCA'));V.tipoRaw=g('TIPO');V.calibre=g('CALIBRE');
+    if(/SIGMA|EX[ÉE]RCITO/i.test(T))V.sistema='Sigma (Exército)';else if(/SINARM/i.test(T))V.sistema='Sinarm-CAC (PF)';
+  }else if(/GUIA DE TR[AÁ]FEGO|GUIA DE TRAFEGO/i.test(T)){
+    kind='GUIA';
+    V.numero=g('NUMERO DA GUIA','N DA GUIA','N GUIA','NUMERO');
+    if(!V.numero){const m=/\b(\d{10,16})\b/.exec(T);if(m)V.numero=m[1]}
+    V.emissao=d(g('DATA DE EMISSAO','DATA DA EMISSAO','EMISSAO'));
+    V.validade=d(g('VALIDADE','DATA DE VALIDADE','VALIDADE DA GUIA','VALIDA ATE','VALIDO ATE'));
+    if(!V.validade){const m=/v[aá]lid[ao]\s*(?:at[ée])?[:\s]*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);if(m)V.validade=d(m[1])}
+    V.destino=g('DESTINO','TRAJETO','LOCAL DE DESTINO','ENDERECO DE DESTINO','LOCAL');
+    V.finalidade=/competi/i.test(T)?'Competição':/ca[cç]a|manejo/i.test(T)?'Caça / manejo':/treinamento|treino/i.test(T)?'Treinamento':'';
+  }else if(/DANFE|NF-e/.test(T)){
+    kind='NF';
+    let m=/Emiss[ãa]o:\s*(\d{2}\/\d{2}\/\d{4})/.exec(T);V.data=d(m?m[1]:'');
+    const i=L.findIndex(l=>/VALOR TOTAL DA NOTA/i.test(l));
+    if(i>=0)V.valor=dinheiro(L.slice(i+1,i+3).join(' '));
+    if(!V.valor){m=/Valor:\s*([\d\.]+,\d{2})/.exec(T);if(m)V.valor=m[1].replace(/\./g,'')}
+    m=/RECEBEMOS DE (.+?) OS PRODUTOS/i.exec(T1);if(m)V.loja=cap(m[1]);
+    m=/N[º°o]\/S[ée]rie:\s*(\d+)/i.exec(T);if(m)V.descricao='Nota fiscal nº '+m[1];
+    m=/\bS:\s*([A-Z0-9]{6,})/.exec(T1);if(m)V.serie=m[1];
+    V.aquisicao=V.data;
+  }else if(/AUTORIZA[ÇC][ÃA]O PARA AQUISI[ÇC][ÃA]O/i.test(T)){
+    kind='AUT';
+    const n=/Autoriza[çc][ãa]o N[º°o]:?\s*(\d{6,})/i.exec(T1),e=/Data de Emiss[ãa]o:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1),v=/Data de Validade:\s*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);
+    V.obs='Autorização de aquisição'+(n?' nº '+n[1]:'')+(e?', emitida em '+e[1]:'')+(v?', válida até '+v[1]:'')+'.';
+  }else{
+    V.numero=g('N DO CR','NUMERO DO CR','CR','NUMERO','N DO REGISTRO');
+    V.emissao=d(g('DATA DE EMISSAO','DATA DE EXPEDICAO','EMISSAO'));
+    V.validade=d(g('VALIDADE','DATA DE VALIDADE','VALIDO ATE','VALIDADE DO CR'));
+    if(!V.validade){const m=/v[aá]lid[ao]\s*(?:at[ée])?[:\s]*(\d{2}\/\d{2}\/\d{4})/i.exec(T1);if(m)V.validade=d(m[1])}
+  }
+  return {kind,V};
+}
+async function autoLer(file){
+  let L;
+  try{toast('Lendo o PDF…');L=await pdfLinhas(file)}catch(e){toast('Não consegui ler este PDF (precisa de internet na primeira vez).');return}
+  if(!F)return;
+  if(L.join('').length<30){toast('Este PDF é uma imagem, não consigo ler o texto. Preencha à mão.');return}
+  const {kind,V}=extrairPdf(L);
+  const alvo={};
+  if(F.col==='armas'){
+    if(kind==='CRAF'){Object.assign(alvo,{serie:V.serie,marca:V.marca,calibre:V.calibre,registro:V.registro,crafEmissao:V.crafEmissao,crafValidade:V.crafValidade,sistema:V.sistema});
+      const t=(TIPOS||[]).find(x=>nrmL(x)===nrmL(V.tipoRaw||''));if(t)alvo.tipo=t}
+    else if(kind==='NF')Object.assign(alvo,{aquisicao:V.aquisicao,serie:V.serie});
+    else if(kind==='AUT')alvo.obs=V.obs;
+  }else if(F.col==='guias'){
+    if(kind==='GUIA'||kind==='')Object.assign(alvo,{numero:V.numero,emissao:V.emissao,validade:V.validade,destino:V.destino,finalidade:V.finalidade});
+  }else if(F.col==='docs'){
+    if(kind===''||kind==='GUIA')Object.assign(alvo,{numero:V.numero,emissao:V.emissao,validade:V.validade});
+  }else if(F.col==='gastos'){
+    if(kind==='NF')Object.assign(alvo,{data:V.data,valor:V.valor,loja:V.loja,descricao:V.descricao});
+  }
+  collect();
+  const SOBRE=['data','crafValidade','crafEmissao','validade','emissao','finalidade','tipo','sistema'];
+  const feitos=[];
+  for(const k in alvo){
+    const val=alvo[k];if(!val)continue;
+    const f=F.fields.find(x=>x.k===k);if(!f)continue;
+    const atual=F.d[k];
+    if(atual==null||atual===''||(SOBRE.includes(k)&&String(atual)!==String(val)&&(F.novo||/validade|emissao/i.test(k)))){
+      if(k==='obs'&&atual)continue;
+      F.d[k]=val;feitos.push(f.l)}
+  }
+  drawForm();
+  toast(feitos.length?'Li o PDF e preenchi: '+feitos.join(', ')+'. Confira antes de salvar.':'Li o PDF, mas não achei dados para preencher.');
 }
 </script>
 
