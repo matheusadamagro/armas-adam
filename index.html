@@ -51,7 +51,7 @@ body.lk{overflow:hidden}
 .lsh{position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,15,18,.55) 0%,rgba(12,15,18,.05) 28%,rgba(12,15,18,.15) 48%,rgba(12,15,18,.88) 78%,rgba(12,15,18,.96) 100%)}
 .lin{position:relative;min-height:100%;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 34px) 22px calc(env(safe-area-inset-bottom,0px) + 26px);max-width:520px;margin:0 auto}
 .lbrand{display:flex;align-items:center;gap:12px}
-.lbrand .mark{width:46px;height:46px}
+.lbrand{flex-direction:column;align-items:flex-start;gap:4px}.lbrand .mark{width:116px;height:116px;margin-left:-8px}
 .lbrand b{font:700 34px/1 var(--disp);letter-spacing:.04em;text-transform:uppercase;text-shadow:0 2px 14px rgba(0,0,0,.6)}
 .lbrand b span{color:#d9b25e}
 .ltag{margin:10px 0 0;color:#d6dee5;font-size:15px;text-shadow:0 1px 8px rgba(0,0,0,.7)}
@@ -70,7 +70,7 @@ body.lk{overflow:hidden}
 .lg-err{margin:0;color:#ffb3a9;font-size:14px;min-height:0}
 .lg-fine{margin:0;color:#8b97a2;font-size:12.5px;text-align:center}
 .lg-hi{color:#d6dee5;font-size:15px}.lg-hi b{display:block;color:#fff;font-size:18px;overflow-wrap:anywhere}
-.lsig{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:92px;opacity:.9;pointer-events:none}
+.lsig{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);width:84px;opacity:.92;pointer-events:none}
 .chipst{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--on-steel);border-radius:99px;padding:5px 11px;font-size:12.5px;white-space:nowrap}
 .chipst[data-st="0"]{color:#f0c97a}.chipst[data-st="1"]{color:#8fe0b2}
 #cfg{z-index:25}
@@ -263,12 +263,11 @@ select.sel{width:100%;padding:11px;border-radius:10px;border:1px solid var(--lin
 
 <div id="launch"><div class="lbg"></div><div class="lsh"></div>
  <div class="lin">
-  <div class="lbrand"><svg class="mark" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" fill="none" stroke="#d9b25e" stroke-width="2.5"/><circle cx="22" cy="22" r="12.5" fill="none" stroke="#d9b25e" stroke-width="2.5"/><circle cx="22" cy="22" r="4.5" fill="#d9b25e"/><path d="M22 0v9M22 35v9M0 22h9M35 22h9" stroke="#d9b25e" stroke-width="2.5" fill="none"/></svg>
+  <div class="lbrand"><img class="mark" src="logo-ma.png" alt="">
    <b>Armas <span>Adam</span></b></div>
   <p class="ltag">Suas armas, guias e munição em dia.</p>
   <div class="lbox" id="lgBox"></div>
  </div>
- <img class="lsig" src="assinatura.png" alt="" onerror="this.remove()">
 </div>
 <div class="sheet" id="cfg" hidden><div class="p" id="cfgForm"></div></div>
 <div id="home">
@@ -1117,7 +1116,7 @@ function abreCfg(){
    <h3>Segurança</h3>
    ${ok?`<button class="btn o" id="cfFace" style="width:100%;margin-top:6px">${face?'Desativar Face ID':'Ativar Face ID'}</button><div class="hint">Com o Face ID ligado, o app pede o seu rosto sempre que abrir.</div>`:'<div class="hint">Este aparelho não oferece Face ID para o app.</div>'}
    <h3>Sincronização</h3>
-   <div class="hint">Versão do app: 11/10 11:33</div>
+   <div class="hint">Versão do app: 11/10 12:55</div>
    <div class="hint" id="cfLast"></div>
    <div class="hint" id="cfAnx"></div>
    <button class="btn o" id="cfSync" style="width:100%;margin-top:8px">Sincronizar agora</button>
