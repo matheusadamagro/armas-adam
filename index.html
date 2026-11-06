@@ -1029,13 +1029,12 @@ setInterval(()=>{if(!document.hidden)sync()},90000);
 /* ---------- tela de abertura e login ---------- */
 const LN=$('#launch');
 let modo='entrar';
-function faceId(){return LSg(K('armas_face'))}
 function mostraLogin(aviso){
   LN.hidden=false;document.body.classList.add('lk');
   const tem=!!SES;
   $('#lgBox').innerHTML=tem?
     `<div class="lg-hi">Olá,<b>${esc(SES.email)}</b></div>
-     <button class="lg-btn" id="lgEnter">${faceId()?'Entrar com Face ID':'Entrar'}</button>
+     <button class="lg-btn" id="lgEnter">Entrar</button>
      ${aviso?`<p class="lg-err">${esc(aviso)}</p>`:''}
      <button class="lg-lnk" id="lgOut">Entrar com outra conta</button>`
    :`<div class="lg-tabs"><button data-m="entrar" class="${modo==='entrar'?'on':''}">Entrar</button><button data-m="criar" class="${modo==='criar'?'on':''}">Criar conta</button></div>
@@ -1050,7 +1049,6 @@ function mostraLogin(aviso){
   if(tem){
     $('#lgEnter').onclick=entrarSessao;
     $('#lgOut').onclick=()=>{SES=null;saveSes();mostraLogin()};
-    if(faceId())setTimeout(()=>{try{entrarSessao()}catch(e){}},350);
   }else{
     document.querySelectorAll('.lg-tabs button').forEach(b=>b.onclick=()=>{modo=b.dataset.m;mostraLogin()});
     $('#lgForm').onsubmit=enviaLogin;
@@ -1080,43 +1078,22 @@ async function esqueci(){
   if(!em){er.textContent='Digite seu e-mail e toque de novo em "Esqueci a senha".';return}
   try{const r=await auth('/auth/v1/recover',{email:em});er.textContent=r.ok?'Enviamos um e-mail para trocar a senha.':errMsg(r)}catch(e){er.textContent='Sem internet.'}
 }
-async function entrarSessao(){
-  if(faceId()){
-    try{
-      await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:'public-key',id:unb64(faceId()),transports:['internal']}],userVerification:'required',timeout:60000}});
-    }catch(e){toast('Face ID não confirmado');return}
-  }
-  abreApp(false);
-}
+async function entrarSessao(){abreApp(false)}
 function abreApp(novo){
   carregaLocal();
   LN.hidden=true;document.body.classList.remove('lk');
   ready=true;$('#ban').hidden=true;
   carregaBlobs().then(()=>{render();sync()});
   render();
-  if(novo&&'credentials' in navigator&&window.PublicKeyCredential&&!faceId()&&!LSg(K('armas_face_no')))setTimeout(oferecerFace,900);
 }
-async function oferecerFace(){
-  if(!confirm('Quer entrar neste aparelho usando o Face ID?'))return LSs(K('armas_face_no'),'1');
-  await ligaFace();
-}
-async function ligaFace(){
-  try{
-    const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:'Armas Adam'},user:{id:rnd(16),name:SES.email,displayName:SES.email},
-      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
-      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000}});
-    LSs(K('armas_face'),b64(c.rawId));toast('Face ID ativado');return true;
-  }catch(e){toast('Não foi possível ativar o Face ID');return false}
-}
-
 /* ---------- ajustes da conta ---------- */
 function abreCfg(){
-  const face=!!faceId(),ok='PublicKeyCredential' in window;
   $('#cfgForm').innerHTML=`<h2>Conta</h2><p class="sub" style="margin-top:4px">${esc(SES?SES.email:'')}</p>
-   <h3>Segurança</h3>
-   ${ok?`<button class="btn o" id="cfFace" style="width:100%;margin-top:6px">${face?'Desativar Face ID':'Ativar Face ID'}</button><div class="hint">Com o Face ID ligado, o app pede o seu rosto sempre que abrir.</div>`:'<div class="hint">Este aparelho não oferece Face ID para o app.</div>'}
+   <h3>Trocar senha</h3>
+   <input id="cfPw" type="password" autocomplete="new-password" minlength="6" placeholder="Nova senha (mín. 6)" style="width:100%;padding:10px;border-radius:10px;font:inherit;margin-top:6px">
+   <button class="btn" id="cfPwGo" style="width:100%;margin-top:8px">Salvar nova senha</button><div class="hint" id="cfPwMsg"></div>
    <h3>Sincronização</h3>
-   <div class="hint">Versão do app: 11/10 12:55</div>
+   <div class="hint">Versão do app: 06/11 sem Face ID</div>
    <div class="hint" id="cfLast"></div>
    <div class="hint" id="cfAnx"></div>
    <button class="btn o" id="cfSync" style="width:100%;margin-top:8px">Sincronizar agora</button>
@@ -1133,7 +1110,10 @@ function abreCfg(){
   $('#cfg').hidden=false;
   $('#cfClose').onclick=()=>$('#cfg').hidden=true;
   $('#cfSync').onclick=async()=>{await sync();abreCfg()};
-  const f=$('#cfFace');if(f)f.onclick=async()=>{if(faceId()){LSd(K('armas_face'));LSs(K('armas_face_no'),'1');abreCfg()}else{if(await ligaFace())abreCfg()}};
+  $('#cfPwGo').onclick=async()=>{const p=$('#cfPw').value,m=$('#cfPwMsg');if(p.length<6){m.textContent='A senha precisa de pelo menos 6 caracteres.';return}
+    try{await ensureTok();const r=await fetch(SB_URL+'/auth/v1/user',{method:'PUT',headers:{apikey:SB_KEY,Authorization:'Bearer '+SES.at,'Content-Type':'application/json'},body:JSON.stringify({password:p})});
+      if(r.ok){$('#cfPw').value='';m.textContent='Senha alterada.'}else{let j={};try{j=await r.json()}catch(e){}m.textContent=j.msg||j.message||'Não foi possível trocar a senha.'}}
+    catch(e){m.textContent='Sem internet.'}};
   $('#cfExp').onclick=exporta;
   $('#cfImp').onclick=()=>$('#cfFile').click();
   $('#cfFile').onchange=importa;

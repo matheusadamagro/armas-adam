@@ -1,4 +1,4 @@
-const V='armas-adam-v4';
+const V='armas-adam-v5';
 const SHELL=['./','index.html','manifest.webmanifest','icon-180.png','icon-192.png','icon-512.png','fundo-armas.jpg'];
 const OPT=['pdfjs/pdf.min.mjs','pdfjs/pdf.worker.min.mjs'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(SHELL.map(u=>fetch(new Request(u,{cache:'reload'})).then(r=>c.put(u,r)))).then(()=>Promise.all(OPT.map(u=>fetch(new Request(u,{cache:'reload'})).then(r=>c.put(u,r)).catch(()=>0))))).then(()=>self.skipWaiting()))});
